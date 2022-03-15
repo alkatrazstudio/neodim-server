@@ -1,0 +1,6 @@
+*.bak
+/models/
+
+__pycache__
+.*
+!.gitignore

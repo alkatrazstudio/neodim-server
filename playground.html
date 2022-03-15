@@ -1,0 +1,432 @@
+<!--
+SPDX-License-Identifier: AGPL-3.0-only
+🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
+-->
+<!doctype html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <title>Neodim Playground</title>
+
+<script>
+const PARAMS_KEY = 'neodim-params'
+
+async function generate(endpoint, request)
+{
+    const body = JSON.stringify(request)
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json'
+        },
+        body
+    })
+    const responseData = await response.json()
+    return responseData
+}
+
+function saveSettings(request)
+{
+    const rawVal = JSON.stringify(request)
+    localStorage.setItem(PARAMS_KEY, rawVal)
+}
+
+function loadSettings()
+{
+    try {
+        const rawVal = localStorage.getItem(PARAMS_KEY)
+        const request = JSON.parse(rawVal) || {}
+        return request
+    } catch(e) {
+        return {}
+    }
+}
+
+function fromJSON(s, def)
+{
+    try {
+        return JSON.parse(s.trim())
+    } catch(e) {
+        return def
+    }
+}
+
+function main()
+{
+    const preambleEl = document.querySelector('#preamble textarea')
+    const promptEl = document.querySelector('#prompt textarea')
+
+    const optEndpointEl = document.querySelector('#option-endpoint input')
+    const optGeneratedTokensCountEl = document.querySelector('#option-generated-tokens-count input')
+    const optMaxTotalTokensEl = document.querySelector('#option-max-total-tokens input')
+    const optTemperatureEl = document.querySelector('#option-temperature input')
+    const optTopKEl = document.querySelector('#option-top-k input')
+    const optTopPEl = document.querySelector('#option-top-p input')
+    const optTfsEl = document.querySelector('#option-tfs input')
+    const optRepetitionPenaltyEl = document.querySelector('#option-repetition-penalty input')
+    const optRepetitionPenaltyRangeEl = document.querySelector('#option-repetition-penalty-range input')
+    const optRepetitionPenaltySlopeEl = document.querySelector('#option-repetition-penalty-slope input')
+    const optRepetitionPenaltyIncludePreambleEl = document.querySelector('#option-repetition-penalty-include-preamble input')
+    const optRepetitionPenaltyIncludeGeneratedEl = document.querySelector('#option-repetition-penalty-include-generated select')
+    const optRepetitionPenaltyTruncateToInputEl = document.querySelector('#option-repetition-penalty-truncate-to-input input')
+    const optTruncatePromptUntilEl = document.querySelector('#option-truncate-prompt-until input')
+    const optStopStringsEl = document.querySelector('#option-stop-strings input')
+
+    const btnGenerate = document.querySelector('#submit')
+    const spinnerEl = document.querySelector('.spinner')
+    const responseTimeEl = document.querySelector('#response h3 span')
+
+    const requestArea = document.querySelector('#request output')
+    const responseArea = document.querySelector('#response output')
+    const errorArea = document.querySelector('#error output')
+
+    const storedRequest = loadSettings()
+    preambleEl.value = (storedRequest.preamble || '').trim()
+    promptEl.value = (storedRequest.prompt || '').trim()
+
+    optEndpointEl.value = storedRequest.endpoint || 'http://127.0.0.1:8787/generate'
+    optGeneratedTokensCountEl.value = storedRequest.generated_tokens_count || 32
+    optMaxTotalTokensEl.value = storedRequest.max_total_tokens || 1024
+    optTemperatureEl.value = storedRequest.temperature || 0.6
+    optTopKEl.value = storedRequest.top_k || 0
+    optTopPEl.value = storedRequest.top_p || 0
+    optTfsEl.value = storedRequest.tfs || 0.95
+    optRepetitionPenaltyEl.value = storedRequest.repetition_penalty || 1.25
+    optRepetitionPenaltyRangeEl.value = storedRequest.repetition_penalty_range || 512
+    optRepetitionPenaltySlopeEl.value = storedRequest.repetition_penalty_slope || 0
+    optRepetitionPenaltyIncludePreambleEl.value = storedRequest.repetition_penalty_include_preamble || false
+    optRepetitionPenaltyIncludeGeneratedEl.value = storedRequest.repetition_penalty_include_generated || 'slide'
+    optRepetitionPenaltyTruncateToInputEl.value = storedRequest.repetition_penalty_truncate_to_input || false
+    optTruncatePromptUntilEl.value = JSON.stringify(storedRequest.truncate_prompt_until || [' '])
+    optStopStringsEl.value = JSON.stringify(storedRequest.stop_strings || [])
+
+    const locale = navigator.languages[0] || 'en-US'
+    const decimalFormat = new Intl.NumberFormat(locale, {
+        maximumFractionDigits: 1,
+        useGrouping: false
+    })
+
+    btnGenerate.addEventListener('click', async () => {
+        let preamble = preambleEl.value.trim()
+        if(preamble.length)
+            preamble += '\n\n'
+        const prompt = promptEl.value.replace(/[ ]+$/, '')
+        const endpoint = optEndpointEl.value.trim()
+
+        errorArea.textContent = ''
+        responseArea.textContent = ''
+        responseTimeEl.textContent = ''
+        btnGenerate.disabled = true
+        spinnerEl.classList.add('running')
+
+        const request = {
+            preamble,
+            prompt,
+            temperature: parseFloat(optTemperatureEl.value),
+            top_k: parseInt(optTopKEl.value),
+            top_p: parseFloat(optTopPEl.value),
+            tfs: parseFloat(optTfsEl.value),
+            repetition_penalty: parseFloat(optRepetitionPenaltyEl.value),
+            repetition_penalty_range: parseFloat(optRepetitionPenaltyRangeEl.value),
+            repetition_penalty_slope: parseFloat(optRepetitionPenaltySlopeEl.value),
+            repetition_penalty_include_preamble: Boolean(optRepetitionPenaltyIncludePreambleEl.checked),
+            repetition_penalty_include_generated: optRepetitionPenaltyIncludeGeneratedEl.value,
+            repetition_penalty_truncate_to_input: Boolean(optRepetitionPenaltyTruncateToInputEl.checked),
+            generated_tokens_count: parseInt(optGeneratedTokensCountEl.value),
+            max_total_tokens: parseInt(optMaxTotalTokensEl.value),
+            sequences_count: 1,
+            truncate_prompt_until: fromJSON(optTruncatePromptUntilEl.value, []),
+            stop_strings: fromJSON(optStopStringsEl.value, [])
+        }
+        saveSettings({
+            ...request,
+            endpoint
+        })
+
+        try {
+            const requestJson = JSON.stringify(request, null, 4)
+            requestArea.textContent = requestJson
+
+            const timeStart = performance.now()
+            const response = await generate(endpoint, request)
+            const timeElapsed = (performance.now() - timeStart) / 1000
+            const responseJson = JSON.stringify(response, null, 4)
+            const elapsedTimeStr = decimalFormat.format(timeElapsed)
+
+            responseArea.textContent = responseJson
+
+            if(response.error)
+            {
+                responseTimeEl.textContent = `(${elapsedTimeStr}s)`
+                throw new Error(response.error)
+            }
+
+            const tokensPerSec = response.generated_tokens_count / timeElapsed
+            const tokensPerSecStr =  decimalFormat.format(tokensPerSec)
+            responseTimeEl.textContent = `(${elapsedTimeStr}s, ${tokensPerSecStr} tokens per second)`
+
+            const seq = response.sequences[0]
+            promptEl.value += seq.generated_text + seq.stop_string
+
+            promptEl.focus()
+            promptEl.setSelectionRange(promptEl.value.length, promptEl.value.length)
+        } catch(e) {
+            errorArea.textContent = e.toString()
+        }
+
+        saveSettings({
+            ...request,
+            endpoint,
+            prompt: promptEl.value
+        })
+
+        btnGenerate.disabled = false
+        spinnerEl.classList.remove('running')
+    })
+}
+
+window.addEventListener('DOMContentLoaded', main)
+</script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+h3 {
+    margin: 0;
+}
+
+main {
+    display: flex;
+    gap: 10px;
+}
+
+#options {
+    width: 300px;
+}
+
+main aside,
+main article {
+    border: 1px solid gray;
+    padding: 0 10px;
+    box-shadow: 3px 3px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+main article {
+    flex: 1;
+}
+
+main article textarea {
+    width: 100%;
+}
+
+#preamble textarea {
+    height: 100px;
+}
+
+#prompt textarea {
+    min-height: 300px;
+}
+
+#traffic {
+    display:flex;
+    flex-direction: column;
+    width: 500px;
+}
+
+#traffic section {
+    margin-bottom: 10px;
+}
+
+#traffic output {
+    background:rgba(0, 0, 0, 0.15);
+    padding: 10px;
+    width: 100%;
+    display: block;
+    white-space: break-spaces;
+    font-size: smaller;
+    font-family: monospace;
+}
+
+#request,
+#response,
+#error {
+    flex: 1
+}
+
+#controls {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+#controls button {
+    font-size: large;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(1turn);
+    }
+}
+
+.spinner {
+    animation: rotate 5s linear infinite;
+    display: none;
+}
+
+.spinner.running {
+    display: inline-block;
+}
+
+#options section {
+    margin-bottom: 10px;
+}
+
+#options section label {
+    font-size: smaller;
+}
+
+input,
+select {
+    width: 100%;
+    font-family: monospace;
+}
+</style>
+</head>
+
+<body>
+
+<main>
+    <aside id="options">
+        <h3>Options</h3>
+        <section id="option-endpoint">
+            <label>
+                Endpoint
+                <input type="url"/>
+            </label>
+        </section>
+        <section id="option-generated-tokens-count">
+            <label>
+                Generated tokens count
+                <input type="number" min="1" max="2048"/>
+            </label>
+        </section>
+        <section id="option-max-total-tokens">
+            <label>
+                Max. total tokens
+                <input type="number" min="1" max="2048"/>
+            </label>
+        </section>
+        <section id="option-temperature">
+            <label>
+                Temperature
+                <input type="number" min="0" max="2" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-top-k">
+            <label>
+                Top k
+                <input type="number" min="0" max="1024"/>
+            </label>
+        </section>
+        <section id="option-top-p">
+            <label>
+                Top p (nucleus sampling)
+                <input type="number" min="0" max="1" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-tfs">
+            <label>
+                Tail-free sampling
+                <input type="number" min="0" max="1" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-repetition-penalty">
+            <label>
+                Repetition penalty
+                <input type="number" min="0" max="10" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-repetition-penalty-range">
+            <label>
+                Repetition penalty range
+                <input type="number" min="0" max="2048" step="1"/>
+            </label>
+        </section>
+        <section id="option-repetition-penalty-slope">
+            <label>
+                Repetition penalty slope
+                <input type="number" min="0" max="10" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-repetition-penalty-include-preamble">
+            <label>
+                Include preamble in repetition penalty range
+                <input type="checkbox"/>
+            </label>
+        </section>
+        <section id="option-repetition-penalty-include-generated">
+            <label>
+                Include generated text in repetition penalty range
+                <select>
+                    <option>ignore</option>
+                    <option>allow</option>
+                    <option>expand</option>
+                    <option>slide</option>
+                </select>
+            </label>
+        </section>
+        <section id="option-repetition-penalty-truncate-to-input">
+            <label>
+                Truncate repetition penalty range to input
+                <input type="checkbox"/>
+            </label>
+        </section>
+        <section id="option-truncate-prompt-until">
+            <label>
+                Truncate prompt until (JSON)
+                <input type="text"/>
+            </label>
+        </section>
+        <section id="option-stop-strings">
+            <label>
+                Stop strings (JSON)
+                <input type="text"/>
+            </label>
+        </section>
+    </aside>
+
+    <article>
+        <section id="preamble">
+            <h3>Preamble</h3>
+            <textarea></textarea>
+        </section>
+        <section id="prompt">
+            <h3>Prompt</h3>
+            <textarea></textarea>
+        </section>
+        <section id="controls">
+            <span class="spinner">⏳</span>
+            <button id="submit">Generate</button>
+        </section>
+    </article>
+
+    <aside id="traffic">
+        <section id="request">
+            <h3>Request</h3>
+            <output></output>
+        </section>
+        <section id="response">
+            <h3>Response <span></span></h3>
+            <output></output>
+        </section>
+        <section id="error">
+            <h3>Error</h3>
+            <output></output>
+        </section>
+    </aside>
+</main>
+
+</body>
+</html>
