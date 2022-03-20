@@ -162,7 +162,7 @@ function main()
             }
 
             const tokensPerSec = response.generated_tokens_count / timeElapsed
-            const tokensPerSecStr =  decimalFormat.format(tokensPerSec)
+            const tokensPerSecStr = decimalFormat.format(tokensPerSec)
             responseTimeEl.textContent = `(${elapsedTimeStr}s, ${tokensPerSecStr} tokens per second)`
 
             const seq = response.sequences[0]

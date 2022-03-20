@@ -510,7 +510,7 @@ e.g. it may leave half of the word in the beginning, like this:
 If the `prompt` does not need to be truncated then `truncate_prompt_until` is ignored.
 
 
-##  API response
+## API response
 
 The API response will be in JSON and can be one of two things: error or data.
 
