@@ -10,6 +10,27 @@ Also, running this on Linux is recommended,
 but otherwise you need to know how to install Python, Git and Bash on your OS.
 
 
+## Contents
+
+- [How it works](#how-it-works)
+- [Security and production use](#security-and-production-use)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [CLI](#cli)
+- [Supported models](#supported-models)
+  - [Notable models](#notable-models)
+- [Prompt and preamble](#prompt-and-preamble)
+  - [Recommendations](#recommendations)
+  - [Example](#example)
+- [API request](#api-request)
+- [API response](#api-response)
+- [Squeezing the VRAM](#squeezing-the-vram)
+  - [Running in console mode](#running-in-console-mode)
+  - [Distributing model layers on CPU](#distributing-model-layers-on-cpu)
+- [Third-party libraries](#third-party-libraries)
+- [License](#license)
+
+
 ## How it works
 
 Neodim Server uses [Transformers](https://huggingface.co/docs/transformers/index)
