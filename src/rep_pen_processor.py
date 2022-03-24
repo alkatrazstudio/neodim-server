@@ -48,6 +48,7 @@ class AdvancedRepetitionPenaltyLogitsProcessor(_RepPenProcessor):
         self.include_preamble = include_preamble
         self.original_penalty = penalty
         self.penalty = penalty
+        self.original_penalty_slope = penalty_slope
         self.penalty_slope = penalty_slope
         self.input_len = input_len
         self.truncate_to_input = truncate_to_input
@@ -97,5 +98,12 @@ class AdvancedRepetitionPenaltyLogitsProcessor(_RepPenProcessor):
 
         if not self.penalty_range or input_ids.shape[-1] == 0:
             return scores
+
+        # applying penalty_slope requires penalty_range > 1
+        # (see the original AdvancedRepetitionPenaltyLogitsProcessor in warpers.py)
+        if self.penalty_range == 1:
+            self.penalty_slope = 0
+        else:
+            self.penalty_slope = self.original_penalty_slope
 
         return super().__call__(input_ids, scores)
