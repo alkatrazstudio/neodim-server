@@ -74,7 +74,7 @@ Neodim Server also lacks a lot of sanity checks and is not foolproof to use.
 ## Quick Start
 
 ```sh
-# WARNING: this will download 2GB of data
+# WARNING: this may download up to 2GB of data
 git clone https://github.com/alkatrazstudio/neodim-server
 neodim-server/start.sh --model=EleutherAI/gpt-neo-125M
 ```
@@ -89,7 +89,7 @@ All CLI options and parameters are explained below.
 
 Here is another example:
 ```sh
-# WARNING: this will download 12GB of data
+# WARNING: this may download up to 13GB of data
 neodim-server/start.sh --model=EleutherAI/gpt-j-6B --model-revision=float16 --listen-address=0.0.0.0
 ```
 It will use the official [GPT-J-6B](https://huggingface.co/EleutherAI/gpt-j-6B) model
