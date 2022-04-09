@@ -149,14 +149,36 @@ def run_ai_server(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", help="Path to the model or its name on Hugging Face")
-    parser.add_argument("--model-revision", help="Model revision/branch on Hugging Face")
-    parser.add_argument("--cache-dir", help="Cache directory for Hugging Face models")
-    parser.add_argument("--listen-address", help="Listen on this address", default="127.0.0.1")
-    parser.add_argument("--listen-port", help="Listen on this port", default="8787")
-    parser.add_argument("--layers", help="Distribute model's layers between GPUs", default="1")
-    parser.add_argument("--version", help="The version of this Neodim Server", action="store_true")
+    parser = argparse.ArgumentParser(
+        prog="start.sh",
+        description=f"{server.name_and_version()} - natural language model AI via HTTP",
+        epilog="License: AGPLv3\n"
+               "More info and help: https://github.com/alkatrazstudio/neodim-server",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        allow_abbrev=False
+    )
+    parser.add_argument("--model",
+                        help="Path to the model or its name on Hugging Face "
+                             "(paths must either be absolute or start with a dot)")
+    parser.add_argument("--model-revision",
+                        help="Model revision/branch on Hugging Face")
+    parser.add_argument("--cache-dir",
+                        help="Cache directory for downloading Hugging Face models")
+    parser.add_argument("--listen-address",
+                        help="Listen on this address (pass 0.0.0.0 to listen on all addresses). "
+                             "Default: 127.0.0.1",
+                        default="127.0.0.1")
+    parser.add_argument("--listen-port",
+                        help="Listen on this port. "
+                             "Default: 8787",
+                        default="8787")
+    parser.add_argument("--layers",
+                        help="Distribute model's layers between GPUs (pass 0 to not use GPUs). "
+                             "Default: 1",
+                        default="1")
+    parser.add_argument("--version",
+                        help="Show the version of this Neodim Server",
+                        action="store_true")
     args = parser.parse_args()
 
     if args.version:
