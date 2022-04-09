@@ -4,10 +4,22 @@ Neodim Server is an HTTP-server
 that provides natural language text generation
 using a selected language model.
 
+---
+
+Main website: https://github.com/alkatrazstudio/neodim-server
+
+Current stable version: **v0.2** (April 2, 2022) • [CHANGELOG](CHANGELOG.md)
+
+Repository branches:
+* [master](https://github.com/alkatrazstudio/neodim-server/tree/master) - current stable version
+* [dev](https://github.com/alkatrazstudio/neodim-server/tree/master) - ongoing development
+
+---
+
 **NOTE:** before reading any further you must have at least a general grasp of the following topics:
 machine learning, text generation, language model, HTTP server, command line interface.
-Also, running this on Linux is recommended,
-but otherwise you need to know how to install Python, Git and Bash on your OS.
+Also, running this on Linux is recommended.
+If you have any other OS you need to know how to install Python, Git and Bash.
 
 
 ## Contents
@@ -16,9 +28,13 @@ but otherwise you need to know how to install Python, Git and Bash on your OS.
 - [Security and production use](#security-and-production-use)
 - [Requirements](#requirements)
 - [Quick Start](#quick-start)
-- [CLI](#cli)
 - [Supported models](#supported-models)
   - [Notable models](#notable-models)
+- [Downloading the language models](#downloading-the-language-models)
+  - [Auto-download](#auto-download)
+  - [Download via Git](#download-via-git)
+  - [Manual download](#manual-download)
+- [CLI](#cli)
 - [Prompt and preamble](#prompt-and-preamble)
   - [Recommendations](#recommendations)
   - [Example](#example)
@@ -114,6 +130,110 @@ curl -Ss --data '{
 but you can remove it to view the raw JSON response)
 
 
+## Supported models
+
+Mostly, any
+[GPT-Neo](https://huggingface.co/models?other=gpt_neo),
+[GPT-J](https://huggingface.co/models?other=gptj),
+[GPT 2](https://huggingface.co/models?other=gpt2) or
+[XGLM](https://huggingface.co/models?other=xglm)
+models will work.
+
+However, each model may have some quirks which are out of the scope of this documentation.
+For example, `GPT 2` models don't support the layers distribution,
+i.e. they can be only run fully on a single GPU or fully on CPU.
+And some XGLM models have trouble with whitespace.
+
+
+### Notable models
+
+* [EleutherAI models](https://huggingface.co/EleutherAI) -
+  original `GPT-Neo` and `GPT-J` models,
+  not specifically trained for any task
+  (jack of all trades, master of none)
+
+* [KoboldAI models](https://huggingface.co/KoboldAI) -
+  models that are used in [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client),
+  trained for various tasks (mostly adventure games and novel writing)
+
+* [hitomi-team/convo-6B](https://huggingface.co/hitomi-team/convo-6B) -
+  a model that is trained to generate conversations
+  (e.g. can be used for chat bots)
+
+* [sberbank-ai/rugpt3large_based_on_gpt2](https://huggingface.co/sberbank-ai/rugpt3large_based_on_gpt2) -
+  at the time of writing this document,
+  this was the best Transformers-compatible model that can generate Russian text
+
+* [facebook/xglm-*](https://huggingface.co/models?sort=downloads&search=facebook%2Fxglm-) -
+  multilingual models
+  (these models have some trouble with encoding/decoding spaces, especially after newlines)
+
+
+## Downloading the language models
+
+There are at least three ways to get a language model on your PC.
+
+
+### Auto-download
+
+Let Neodim Server download the model from HuggingFace.
+In this case you need to pass the model's name (e.g. `EleutherAI/gpt-neo-2.7B`)
+to the [--model](#model-string-required) parameter.
+
+
+### Download via Git
+
+Specifying a model's name may be convenient, but it has some drawbacks:
+* You need an internet connection even if the model was previously loaded
+* It's hard to move the downloaded model to a different place or make a backup.
+
+So, you may want to download the model manually first.
+You can do it with Git, for example:
+```sh
+# first enable LFS if it's not enabled already
+git lfs install
+
+# then clone the model's repository
+git clone https://huggingface.co/EleutherAI/gpt-neo-2.7B
+
+# or if you want to clone a specific branch
+git clone -b float16 https://huggingface.co/EleutherAI/gpt-j-6B
+```
+
+After that you'll be able to specify the cloned directory path in the `model` parameter.
+
+**NOTES:**
+
+* The whole Git repository will take twice the space that is really needed to run the model.
+  The `.git` subfolder will contain the entire copy of the language model.
+  If you don't plan on frequently updating the model you can remove the `.git` subfolder to save some disk space.
+
+* The repository may contain some other files that is not needed for Neodim Server.
+  For example, a language model for Rust or something like that.
+  The list of required files depends on a model,
+  but the only big file that is used by Neodim Server is `pytorch_model.bin`.
+  If there are some other multi-gigabyte files (e.g. `rust_model.ot` or `flax_model.msgpack`),
+  you can safely remove them.
+
+
+### Manual download
+
+Downloading models with Git is easy, but as discussed in the previous section,
+you may need to do some cleanup afterwards.
+
+It's also possible to manually download all needed files from HuggingFace.
+
+1. Go to the model's page, e.g. https://huggingface.co/EleutherAI/gpt-j-6B.
+2. Go to "Files and versions" tab.
+3. Choose the required branch from the dropdown, e.g. `float16`.
+4. Download all needed files by clicking the "down arrow" icon.
+5. Put all these files in the same folder.
+
+Like it was said in the previous section, the only multi-gigabyte file you need is `pytorch_model.bin`.
+All other huge files are not needed.
+However, all other small files (e.g. `*.json` and `*.txt`) are usually needed to run a language model.
+
+
 ## CLI
 
 To start the server run the `start.sh` script.
@@ -127,30 +247,13 @@ Below is the list of all supported parameters.
 
 ### `model`: string (required)
 
-You can specify either a path to the directory of your model, 
+You can specify either a path to the directory of your model,
 or its name on Hugging Face (e.g. `EleutherAI/gpt-neo-2.7B`).
 
 The directory path must either be absolute (e.g. `/path/to/model`)
 or start with a dot (e.g. `./some/path` or `../some/path`).
 
-Specifying a model's name may be convenient but it has some drawbacks:
-* You need an internet connection even if the model was previously loaded
-* It's hard to move the downloaded model to a different place or make a backup.
-
-So, you may want to download the model manually first.
-You can do it with `git`, for example:
-```sh
-# first enable LFS if it's not enabled already
-git lfs install
-
-# then clone the model's repository
-git clone https://huggingface.co/EleutherAI/gpt-neo-2.7B
-
-# or if you want to clone a specific branch
-git clone -b float16 https://huggingface.co/EleutherAI/gpt-j-6B
-```
-
-After that you'll be able to specify the cloned directory path in the `model` parameter.
+Read more on how to [download the language models](#downloading-the-language-models).
 
 ### `model-revision`: string (optional, default=\<default branch for the repo\>)
 
@@ -197,45 +300,6 @@ and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`) or put all layers on GPUs.
 
 
-## Supported models
-
-Mostly, any
-[GPT-Neo](https://huggingface.co/models?other=gpt_neo),
-[GPT-J](https://huggingface.co/models?other=gptj),
-[GPT 2](https://huggingface.co/models?other=gpt2) or
-[XGLM](https://huggingface.co/models?other=xglm)
-models will work.
-
-However, each model may have some quirks which are out of the scope of this documentation.
-For example, `GPT 2` models don't support the layers distribution,
-i.e. they can be only run fully on a single GPU or fully on CPU.
-And some XGLM models have trouble with whitespace.
-
-
-### Notable models
-
-* [EleutherAI models](https://huggingface.co/EleutherAI) -
-  original `GPT-Neo` and `GPT-J` models,
-  not specifically trained for any task
-  (jack of all trades, master of none)
-
-* [KoboldAI models](https://huggingface.co/KoboldAI) -
-  models that are used in [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client),
-  trained for various tasks (mostly adventure games and novel writing)
-
-* [hakurei/c1-6B](https://huggingface.co/hakurei/c1-6B) -
-  a model that is trained to generate conversations
-  (e.g. can be used for chat bots)
-
-* [sberbank-ai/rugpt3large_based_on_gpt2](https://huggingface.co/sberbank-ai/rugpt3large_based_on_gpt2) -
-  at the time of writing this document,
-  this was the best Transformers-compatible model that can generate Russian text
-
-* [facebook/xglm-*](https://huggingface.co/models?sort=downloads&search=facebook%2Fxglm-) -
-  multilingual models
-  (these models have some trouble with encoding/decoding spaces, especially after newlines)
-
-
 ## Prompt and preamble
 
 With each request you can pass two chunks of text to the model.
@@ -248,6 +312,7 @@ so that the final input text can fit inside the total allowed number of tokens.
 The preamble is never truncated.
 
 Either preamble or prompt can be empty, but not both at the same time.
+
 
 ### Recommendations
 
@@ -708,6 +773,10 @@ Maximum values of reserved/allocated/free VRAM during the inference, in bytes.
 
 
 ## Squeezing the VRAM
+
+Decent language models take up a lot of precious VRAM.
+There are a couple of ways to optimize VRAM usage.
+
 
 ### Running in console mode
 
