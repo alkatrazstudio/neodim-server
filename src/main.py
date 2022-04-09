@@ -156,7 +156,13 @@ def main() -> None:
     parser.add_argument("--listen-address", help="Listen on this address", default="127.0.0.1")
     parser.add_argument("--listen-port", help="Listen on this port", default="8787")
     parser.add_argument("--layers", help="Distribute model's layers between GPUs", default="1")
+    parser.add_argument("--version", help="The version of this Neodim Server", action="store_true")
     args = parser.parse_args()
+
+    if args.version:
+        print(server.SERVER_VERSION)
+        return
+
     if not args.model:
         raise RuntimeError("--model is missing")
 

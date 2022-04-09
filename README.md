@@ -241,6 +241,7 @@ You can pass some parameters to it in the following forms: `--<param-name>=val` 
 For example, `--model=EleutherAI/gpt-neo-1.3B` or `--model EleutherAI/gpt-neo-1.3B`.
 
 Pass `--help` or `-h` to show a short help.
+Pass `--version` to show the version of your Neodim Server.
 
 Below is the list of all supported parameters.
 
