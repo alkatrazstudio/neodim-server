@@ -11,3 +11,6 @@ python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 pip install -r requirements_direct.txt
 pip freeze > requirements.txt
+
+REQ_HASH=($(md5sum requirements.txt))
+printf "%s" "${REQ_HASH[0]}" > .requirements_hash
