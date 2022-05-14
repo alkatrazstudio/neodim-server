@@ -44,8 +44,8 @@ If you have any other OS you need to install Python, Git, Bash and md5sum.
   - [Running in console mode](#running-in-console-mode)
   - [Distributing model layers on CPU](#distributing-model-layers-on-cpu)
 - [Third-party libraries](#third-party-libraries)
-- [Client applications](#client-applications)
 - [License](#license)
+- [Client applications](#client-applications)
 
 
 ## How it works
@@ -817,14 +817,14 @@ Other direct dependencies:
 * [protobuf](https://pypi.org/project/protobuf/)
 
 
+## License
+
+[AGPL v3](LICENSE)
+
+
 ## Client applications
 
 Here's a list of applications that use Neodim Server:
 
 * [Neodim Chat](https://github.com/alkatrazstudio/neodim-chat) -
   Android application for chatting with a bot
-
-
-## License
-
-[AGPL v3](LICENSE)
