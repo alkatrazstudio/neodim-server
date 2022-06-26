@@ -1,6 +1,11 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.4 (June 26, 2022)
+
+- Fixed: wrong device detection when moving the entire model to GPU
+
+
 ## v0.3 (April 10, 2022)
 
 - Added: `--version` flag to show the current version
