@@ -815,6 +815,7 @@ Other direct dependencies:
 * [torch](https://pypi.org/project/torch/)
 * [sentencepiece](https://pypi.org/project/sentencepiece/)
 * [protobuf](https://pypi.org/project/protobuf/)
+* [accelerate](https://pypi.org/project/accelerate/)
 
 
 ## License
