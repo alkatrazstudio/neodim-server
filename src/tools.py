@@ -7,7 +7,8 @@ from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, XGLMPreTrainedModel
+from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel
+from transformers import OPTPreTrainedModel, XGLMPreTrainedModel
 from transformers import PretrainedConfig, PreTrainedModel
 
 
@@ -16,6 +17,7 @@ class ModelType(Enum):
     GPT_J = "gptj"
     XGLM = "xglm"
     GPT2 = "gpt2"
+    OPT = "opt"
 
 
 def model_type(model: PreTrainedModel) -> ModelType:
@@ -27,6 +29,8 @@ def model_type(model: PreTrainedModel) -> ModelType:
         return ModelType.XGLM
     if isinstance(model, GPT2PreTrainedModel):
         return ModelType.GPT2
+    if isinstance(model, OPTPreTrainedModel):
+        return ModelType.OPT
     raise RuntimeError(f"Unsupported model class: {model.__class__.__name__}")
 
 
@@ -39,6 +43,8 @@ def model_type_by_config(config: PretrainedConfig) -> ModelType:
         return ModelType.XGLM
     if isinstance(config, GPT2PreTrainedModel.config_class):
         return ModelType.GPT2
+    if isinstance(config, OPTPreTrainedModel.config_class):
+        return ModelType.OPT
     raise RuntimeError(f"Unsupported config class: {config.__class__.__name__}")
 
 
@@ -47,6 +53,8 @@ def num_layers(config: PretrainedConfig) -> int:
         return config.num_layers
     if hasattr(config, "n_layer"):
         return config.n_layer
+    if hasattr(config, "num_hidden_layers"):
+        return config.num_hidden_layers
     raise RuntimeError(f"Cannot determine the number of layers for {config.__class__.__name__}")
 
 

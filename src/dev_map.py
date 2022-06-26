@@ -66,7 +66,16 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
             "model.embed_positions": DeviceMapValue.CPU_IF_USED,
             "lm_head": DeviceMapValue.FIRST_DEVICE
         }
-    }
+    },
+    ModelType.OPT: {
+        "layer_key_template": "model.decoder.layers.{layer}",
+        "device_map_template": {
+            "model.decoder.embed_tokens": DeviceMapValue.FIRST_DEVICE,
+            "model.decoder.embed_positions": DeviceMapValue.FIRST_DEVICE,
+            "model.decoder.final_layer_norm": DeviceMapValue.FIRST_DEVICE,
+            "lm_head": DeviceMapValue.FIRST_DEVICE
+        }
+    },
 }
 
 

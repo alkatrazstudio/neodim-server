@@ -23,7 +23,7 @@ class TokenizerResult:
 
 
 def is_s_newline(model: PreTrainedModel) -> bool:
-    return tools.model_type(model) == ModelType.XGLM
+    return tools.model_type(model) in [ModelType.XGLM, ModelType.OPT]
 
 
 def has_extra_nl_space(tokenizer: PreTrainedTokenizer) -> bool:
@@ -38,6 +38,16 @@ def has_extra_nl_space(tokenizer: PreTrainedTokenizer) -> bool:
     return tokenizer.__has_extra_nl_space
 
 
+def has_extra_nl(tokenizer: PreTrainedTokenizer) -> bool:
+    if hasattr(tokenizer, "__has_extra_nl"):
+        return tokenizer.__has_extra_nl
+
+    # For an OPT tokenizer the "\na" will be transformed into "\n\na".
+    s = tokenizer.decode(tokenizer.encode(S_NEWLINE + "a"))
+    tokenizer.__has_extra_nl = s == S_NEWLINE + S_NEWLINE + "a"
+    return tokenizer.__has_extra_nl
+
+
 def str_to_tokens(text: str, model: PreTrainedModel, tokenizer: PreTrainedTokenizer) -> list[int]:
     if not text:
         return []
@@ -47,7 +57,7 @@ def str_to_tokens(text: str, model: PreTrainedModel, tokenizer: PreTrainedTokeni
         text = text.replace("\n", S_NEWLINE)
 
     tokens = tokenizer.encode(text)
-    if s_nl and has_extra_nl_space(tokenizer) and len(tokens):
+    if s_nl and (has_extra_nl_space(tokenizer) or has_extra_nl(tokenizer)) and len(tokens):
         tokens = tokens[1:]
     return tokens
 

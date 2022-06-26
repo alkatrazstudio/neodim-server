@@ -136,8 +136,9 @@ but you can remove it to view the raw JSON response)
 Mostly, any
 [GPT-Neo](https://huggingface.co/models?other=gpt_neo),
 [GPT-J](https://huggingface.co/models?other=gptj),
-[GPT 2](https://huggingface.co/models?other=gpt2) or
-[XGLM](https://huggingface.co/models?other=xglm)
+[GPT 2](https://huggingface.co/models?other=gpt2),
+[XGLM](https://huggingface.co/models?other=xglm) or
+[OPT](https://huggingface.co/models?other=opt)
 models will work.
 
 However, each model may have some quirks which are out of the scope of this documentation.
