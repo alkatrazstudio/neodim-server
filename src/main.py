@@ -110,7 +110,7 @@ def run_ai_server(
         model = ai.move_to_cpu(model)
         gpu_device = None
     else:
-        gpu_device = next((x for x in layers if x == n_layers), -1)
+        gpu_device = next((i for i, x in enumerate(layers) if x == n_layers), -1)
         if gpu_device >= 0:
             print(f"Moving the entire model to GPU {gpu_device}")
             model = ai.move_to_gpu(model, gpu_device)
