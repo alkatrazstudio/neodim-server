@@ -9,10 +9,11 @@ import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
 import ai
-from ai import GeneratedOutput
+import dev_map
 import server
-from server import RequestData, Callback
 import tools
+from ai import GeneratedOutput
+from server import Callback, RequestData
 
 
 def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: Optional[int]) -> Callback:
@@ -94,35 +95,41 @@ def run_ai_server(
         print(f"Loading the model: {model_path}")
     else:
         print(f"Loading the model: {model_path} ({model_revision})")
-    model, tokenizer = ai.load(model_path, model_revision, cache_dir)
-    mtype = tools.model_type(model)
-    t_elapsed = round(time.time() - t_start)
-    print(f"Model {model.__class__.__name__} ({mtype.name}) loaded in {t_elapsed}s")
-    print()
+
+    config = ai.load_config(model_path, model_revision, cache_dir)
+    model_type = tools.model_type_by_config(config)
 
     if layers is None:
         layers = [1]
-    n_layers = tools.num_layers(model)
-    t_start = time.time()
-    print(f"Distributing {n_layers} model layers: {layers}")
-    if sum(layers) == 0:
-        print("Moving the entire model to CPU")
-        model = ai.move_to_cpu(model)
-        gpu_device = None
-    else:
-        gpu_device = next((i for i, x in enumerate(layers) if x == n_layers), -1)
-        if gpu_device >= 0:
-            print(f"Moving the entire model to GPU {gpu_device}")
-            model = ai.move_to_gpu(model, gpu_device)
-        else:
-            gpu_layers = sum(layers)
-            cpu_layers = n_layers - gpu_layers
-            gpu_count = len([x for x in layers if x])
-            print(f"Distributing {gpu_layers} layer(s) to {gpu_count} GPU(s), and {cpu_layers} layers to CPU")
-            ai.distribute_layers(model, layers)
-            gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
+    layers_count = tools.num_layers(config)
+    gpu_layers_count = sum(layers)
+    cpu_layers_count = layers_count - gpu_layers_count
+    gpus_count = len([x for x in layers if x])
+
+    device_map = dev_map.build(model_type, layers_count, layers)
+    model, tokenizer = ai.load(model_path, model_revision, cache_dir, device_map)
+
     t_elapsed = round(time.time() - t_start)
-    print(f"Layers distributed in {t_elapsed}s")
+    print(f"Model {model.__class__.__name__} ({model_type.name}) loaded in {t_elapsed}s")
+    if device_map is not None:
+        gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
+        print(f"Distributed {gpu_layers_count} layer(s) to {gpus_count} GPU(s), and {cpu_layers_count} layers to CPU")
+    else:
+        t_start = time.time()
+        print(f"Distributing {layers_count} model layers: {layers}")
+        if gpu_layers_count == 0:
+            print("Moving the entire model to CPU")
+            model = ai.move_to_cpu(model)
+            gpu_device = None
+        else:
+            layers_str = ",".join(str(layer) for layer in layers)
+            raise RuntimeError(
+                f"Such layer distribution ({layers_str}) is not supported by the current model "
+                f"{model.__class__.__name__} ({model_type.name})"
+            )
+
+        t_elapsed = round(time.time() - t_start)
+        print(f"Layers distributed in {t_elapsed}s")
 
     free_mems = []
     for gpu_index in range(gpu_devices_count):

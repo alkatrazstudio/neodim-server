@@ -2,13 +2,13 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 
-from enum import Enum
 import gc
+from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel
-from transformers import PreTrainedModel, XGLMPreTrainedModel
+from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, XGLMPreTrainedModel
+from transformers import PretrainedConfig, PreTrainedModel
 
 
 class ModelType(Enum):
@@ -30,10 +30,24 @@ def model_type(model: PreTrainedModel) -> ModelType:
     raise RuntimeError(f"Unsupported model class: {model.__class__.__name__}")
 
 
-def num_layers(model: PreTrainedModel) -> int:
-    if hasattr(model.config, "num_layers"):
-        return model.config.num_layers
-    return model.config.n_layer
+def model_type_by_config(config: PretrainedConfig) -> ModelType:
+    if isinstance(config, GPTNeoPreTrainedModel.config_class):
+        return ModelType.GPT_NEO
+    if isinstance(config, GPTJPreTrainedModel.config_class):
+        return ModelType.GPT_J
+    if isinstance(config, XGLMPreTrainedModel.config_class):
+        return ModelType.XGLM
+    if isinstance(config, GPT2PreTrainedModel.config_class):
+        return ModelType.GPT2
+    raise RuntimeError(f"Unsupported config class: {config.__class__.__name__}")
+
+
+def num_layers(config: PretrainedConfig) -> int:
+    if hasattr(config, "num_layers"):
+        return config.num_layers
+    if hasattr(config, "n_layer"):
+        return config.n_layer
+    raise RuntimeError(f"Cannot determine the number of layers for {config.__class__.__name__}")
 
 
 def cleanup() -> None:
@@ -49,11 +63,6 @@ def normalize_str_list(strs: Optional[list[str]] = None) -> list[str]:
     strs = sorted(strs, key=len, reverse=True)
     strs = [s for s in strs if s]
     return strs
-
-
-def supports_layers_distribution(model: PreTrainedModel) -> bool:
-    mtype = model_type(model)
-    return mtype in [ModelType.GPT_NEO, ModelType.GPT_J, ModelType.XGLM]
 
 
 def format_float(f: float, digits: int = 1) -> str:

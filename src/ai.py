@@ -2,23 +2,20 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 from dataclasses import dataclass
-from types import MethodType
 from typing import Optional
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, PretrainedConfig
 from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteriaList
 
-from third_party import breakmodel
-
-from gpu_info import GpuInfo, GpuMemStats
 import logits_warper_override as lwo
+import tokenizer as tok
+import tools
+from dev_map import DeviceMap
+from gpu_info import GpuInfo, GpuMemStats
 from memory_tracing_criteria import MemoryTracingCriteria
 from rep_pen_processor import AdvancedRepetitionPenaltyLogitsProcessor, RepPenGenerated
 from stop_tokens_criteria import StopTokensCriteria
-import tokenizer as tok
-import tools
-from tools import ModelType
 
 
 @dataclass
@@ -75,17 +72,33 @@ class GeneratedOutput:
         }
 
 
-def load(
+def load_config(
     model_path: str,
     model_revision: Optional[str] = None,
     cache_dir: Optional[str] = None
+) -> PretrainedConfig:
+    cfg = AutoConfig.from_pretrained(
+        model_path,
+        revision=model_revision,
+        cache_dir=cache_dir,
+        gradient_checkpointing=None
+    )
+    return cfg
+
+
+def load(
+    model_path: str,
+    model_revision: Optional[str] = None,
+    cache_dir: Optional[str] = None,
+    device_map: Optional[DeviceMap] = None
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         revision=model_revision,
         torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
-        cache_dir=cache_dir
+        cache_dir=cache_dir,
+        device_map=device_map
     )
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -105,33 +118,6 @@ def load(
         model.config.pad_token_id = model.config.eos_token_id
 
     return model, tokenizer
-
-
-def distribute_layers(model: PreTrainedModel, gpu_layers: list[int], primary_device: int = 0) -> None:
-    breakmodel.gpu_blocks = gpu_layers
-    breakmodel.primary_device = primary_device
-    model.half().to("cpu")
-
-    mtype = tools.model_type(model)
-    if mtype in [ModelType.GPT_NEO, ModelType.GPT_J]:
-        model.transformer.wte.to(primary_device)
-        model.transformer.ln_f.to(primary_device)
-        model.lm_head.to(primary_device)
-        if mtype == ModelType.GPT_NEO:
-            model.transformer.wpe.to(primary_device)
-        model.transformer.forward = MethodType(breakmodel.new_forward_neo, model.transformer)
-        breakmodel.move_hidden_layers(model.transformer)
-
-    elif mtype == ModelType.XGLM:
-        model.model.embed_tokens.to(primary_device)
-        model.model.layer_norm.to(primary_device)
-        model.lm_head.to(primary_device)
-        model.model.embed_positions.to(primary_device)
-        model.model.forward = MethodType(breakmodel.new_forward_xglm, model.model)
-        breakmodel.move_hidden_layers(model.model, model.model.layers)
-
-    else:
-        raise RuntimeError(f"{model.__class__.__name__} ({mtype.name}) does not support layers distribution")
 
 
 def move_to_gpu(model: PreTrainedModel, gpu_device: int) -> PreTrainedModel:

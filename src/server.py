@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, Final, Optional, Type
 
 from ai import GeneratedOutput
