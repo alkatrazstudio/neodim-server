@@ -81,7 +81,7 @@ Neodim Server also lacks a lot of sanity checks and is not foolproof to use.
 
 ## Requirements
 
-* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), preferably with up-to-date drivers
+* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), preferably with up-to-date drivers, supporting at least CUDA v11.6.
 * Appropriate amount of free VRAM (e.g., at least 5GB of free VRAM for `GPT-J-6B` model)
 * Appropriate amount or free RAM (e.g., at least 15GB of free RAM for `GPT-J-6B` model)
 * Python 3.9+ (check with `python3 --version`)

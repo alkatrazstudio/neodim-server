@@ -10,7 +10,8 @@ mv requirements.txt "requirements.txt.$(date "+%Y%m%d_%H%M%S").bak"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 pip install -r requirements_direct.txt
-pip freeze > requirements.txt
+echo "--extra-index-url https://download.pytorch.org/whl/cu116" > requirements.txt
+pip freeze >> requirements.txt
 
 REQ_HASH=($(md5sum requirements.txt))
 printf "%s" "${REQ_HASH[0]}" > .requirements_hash
