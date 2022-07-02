@@ -133,18 +133,17 @@ but you can remove it to view the raw JSON response)
 
 ## Supported models
 
-Mostly, any
-[GPT-Neo](https://huggingface.co/models?other=gpt_neo),
-[GPT-J](https://huggingface.co/models?other=gptj),
-[GPT 2](https://huggingface.co/models?other=gpt2),
-[XGLM](https://huggingface.co/models?other=xglm) or
-[OPT](https://huggingface.co/models?other=opt)
-models will work.
+* [GPT-Neo](https://huggingface.co/models?other=gpt_neo),
+  [GPT-J](https://huggingface.co/models?other=gptj),
+  [GPT 2](https://huggingface.co/models?other=gpt2),
+  [OPT](https://huggingface.co/models?other=opt) - fully supported,
+  except some corner cases (like 8-bit models).
+* [XGLM](https://huggingface.co/models?other=xglm) - only some `fairseq` models are supported.
+  You may try your luck with
+  [KoboldAI fairseq-dense-* models](https://huggingface.co/KoboldAI).
 
 However, each model may have some quirks which are out of the scope of this documentation.
-For example, `GPT 2` models don't support the layers distribution,
-i.e. they can be only run fully on a single GPU or fully on CPU.
-And some XGLM models have trouble with whitespace.
+For example, XGLM and OPT models have trouble with whitespace and newlines.
 
 
 ### Notable models
