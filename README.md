@@ -157,17 +157,9 @@ For example, XGLM and OPT models have trouble with whitespace and newlines.
   models that are used in [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client),
   trained for various tasks (mostly adventure games and novel writing)
 
-* [hitomi-team/convo-6B](https://huggingface.co/hitomi-team/convo-6B) -
-  a model that is trained to generate conversations
-  (e.g. can be used for chat bots)
-
 * [sberbank-ai/rugpt3large_based_on_gpt2](https://huggingface.co/sberbank-ai/rugpt3large_based_on_gpt2) -
   at the time of writing this document,
   this was the best Transformers-compatible model that can generate Russian text
-
-* [facebook/xglm-*](https://huggingface.co/models?sort=downloads&search=facebook%2Fxglm-) -
-  multilingual models
-  (these models have some trouble with encoding/decoding spaces, especially after newlines)
 
 
 ## Downloading the language models
