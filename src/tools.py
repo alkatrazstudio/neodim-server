@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-
 import gc
 from enum import Enum
 from typing import Optional

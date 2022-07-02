@@ -3,6 +3,7 @@
 
 import argparse
 import time
+from argparse import Namespace
 from typing import Optional
 
 import torch
@@ -60,14 +61,7 @@ def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer,
     return request_callback
 
 
-def run_ai_server(
-    model_path: str,
-    model_revision: Optional[str] = None,
-    cache_dir: Optional[str] = None,
-    ip: str = "127.0.0.1",
-    port: int = 8787,
-    layers: Optional[list[int]] = None
-) -> None:
+def print_gpu_info() -> None:
     title = server.name_and_version()
     print("=" * len(title))
     print(title)
@@ -90,11 +84,19 @@ def run_ai_server(
             print(f"{gpu_index}. {gpu_name} ({mem_total_str} total, {mem_free_str} free)")
     print()
 
-    t_start = time.time()
+
+def load_model(
+    model_path: str,
+    model_revision: Optional[str] = None,
+    cache_dir: Optional[str] = None,
+    layers: Optional[list[int]] = None
+) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
     if not model_revision:
         print(f"Loading the model: {model_path}")
     else:
         print(f"Loading the model: {model_path} ({model_revision})")
+
+    t_start = time.time()
 
     config = ai.load_config(model_path, model_revision, cache_dir)
     model_type = tools.model_type_by_config(config)
@@ -102,6 +104,8 @@ def run_ai_server(
     if layers is None:
         layers = [1]
     layers_count = tools.num_layers(config)
+    layers_str = ",".join(str(layer) for layer in layers)
+    print(f"Total layers: {layers_count} (distribution: {layers_str})")
     gpu_layers_count = sum(layers)
     cpu_layers_count = layers_count - gpu_layers_count
     gpus_count = len([x for x in layers if x])
@@ -115,8 +119,6 @@ def run_ai_server(
         gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
         print(f"Distributed {gpu_layers_count} layer(s) to {gpus_count} GPU(s), and {cpu_layers_count} layers to CPU")
     else:
-        t_start = time.time()
-        print(f"Distributing {layers_count} model layers: {layers}")
         if gpu_layers_count == 0:
             print("Moving the entire model to CPU")
             model = ai.move_to_cpu(model)
@@ -124,13 +126,16 @@ def run_ai_server(
         else:
             layers_str = ",".join(str(layer) for layer in layers)
             raise RuntimeError(
-                f"Such layer distribution ({layers_str}) is not supported by the current model "
+                f"Layer distribution ({layers_str}) is not supported by the current model "
                 f"{model.__class__.__name__} ({model_type.name})"
             )
+    print()
 
-        t_elapsed = round(time.time() - t_start)
-        print(f"Layers distributed in {t_elapsed}s")
+    return model, tokenizer, gpu_device
 
+
+def print_free_ram():
+    gpu_devices_count = torch.cuda.device_count()
     free_mems = []
     for gpu_index in range(gpu_devices_count):
         memory_free, _ = torch.cuda.mem_get_info(gpu_index)
@@ -140,6 +145,14 @@ def run_ai_server(
     print(f"Free VRAM: {free_mem_str}")
     print()
 
+
+def run_ai_server(
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    gpu_device: Optional[int] = None,
+    ip: str = "127.0.0.1",
+    port: int = 8787
+) -> None:
     callback = get_request_callback(model, tokenizer, gpu_device)
     print("Server is running")
     print(f"Endpoint for text generation: http://{ip}:{port}{server.ENDPOINT_PATH}")
@@ -155,7 +168,7 @@ def run_ai_server(
     print("Neodim Server is terminated.")
 
 
-def main() -> None:
+def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(
         prog="start.sh",
         description=f"{server.name_and_version()} - natural language model AI via HTTP",
@@ -188,6 +201,14 @@ def main() -> None:
                         action="store_true")
     args = parser.parse_args()
 
+    args.listen_port = int(args.listen_port)
+    args.layers_arr = [int(x) for x in args.layers.split(",")]
+    return args
+
+
+def main() -> None:
+    args = parse_args()
+
     if args.version:
         print(server.SERVER_VERSION)
         return
@@ -195,16 +216,9 @@ def main() -> None:
     if not args.model:
         raise RuntimeError("--model is missing")
 
-    listen_port = int(args.listen_port)
-    layers = [int(x) for x in args.layers.split(",")]
-    run_ai_server(
-        model_path=args.model,
-        model_revision=args.model_revision,
-        cache_dir=args.cache_dir,
-        ip=args.listen_address,
-        port=listen_port,
-        layers=layers
-    )
+    print_gpu_info()
+    model, tokenizer, gpu_device = load_model(args.model, args.model_revision, args.cache_dir, args.layers_arr)
+    run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 
 
 if __name__ == "__main__":
