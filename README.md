@@ -212,7 +212,7 @@ After that you'll be able to specify the cloned directory path in the `model` pa
 * The repository may contain some other files that is not needed for Neodim Server.
   For example, a language model for Rust or something like that.
   The list of required files depends on a model,
-  but the only big file that is used by Neodim Server is `pytorch_model.bin`.
+  but the only big file(s) that is used by Neodim Server is `pytorch_model*.bin`.
   If there are some other multi-gigabyte files (e.g. `rust_model.ot` or `flax_model.msgpack`),
   you can safely remove them.
 
@@ -230,7 +230,7 @@ It's also possible to manually download all needed files from HuggingFace.
 4. Download all needed files by clicking the "down arrow" icon.
 5. Put all these files in the same folder.
 
-Like it was said in the previous section, the only multi-gigabyte file you need is `pytorch_model.bin`.
+Like it was said in the previous section, the only multi-gigabyte file(s) you need is `pytorch_model*.bin`.
 All other huge files are not needed.
 However, all other small files (e.g. `*.json` and `*.txt`) are usually needed to run a language model.
 
