@@ -4,7 +4,7 @@
 import argparse
 import time
 from argparse import Namespace
-from typing import Optional
+from typing import Final, Optional
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -15,6 +15,9 @@ import server
 import tools
 from ai import GeneratedOutput
 from server import Callback, RequestData
+
+
+AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
 def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: Optional[int]) -> Callback:
@@ -85,11 +88,30 @@ def print_gpu_info() -> None:
     print()
 
 
+def parse_layers(layer_strs: Optional[list[str]], layers_count: int) -> list[int]:
+    if layer_strs is None:
+        return [1]
+
+    explicit_count = 0
+    for layer_str in layer_strs:
+        if layer_str != AVAILABLE_LAYERS_CHAR:
+            explicit_count += int(layer_str)
+    available_count = layers_count - explicit_count
+
+    layers = [
+        int(layer_str)
+        if layer_str != AVAILABLE_LAYERS_CHAR
+        else available_count
+        for layer_str in layer_strs
+    ]
+    return layers
+
+
 def load_model(
     model_path: str,
     model_revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    layers: Optional[list[int]] = None
+    layer_strs: Optional[list[str]] = None
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
     if not model_revision:
         print(f"Loading the model: {model_path}")
@@ -101,9 +123,8 @@ def load_model(
     config = ai.load_config(model_path, model_revision, cache_dir)
     model_type = tools.model_type(config)
 
-    if layers is None:
-        layers = [1]
     layers_count = tools.num_layers(config)
+    layers = parse_layers(layer_strs, layers_count)
     layers_str = ",".join(str(layer) for layer in layers)
     print(f"Total layers: {layers_count} (distribution: {layers_str})")
     gpu_layers_count = sum(layers)
@@ -202,7 +223,7 @@ def parse_args() -> Namespace:
     args = parser.parse_args()
 
     args.listen_port = int(args.listen_port)
-    args.layers_arr = [int(x) for x in args.layers.split(",")]
+    args.layer_strs = args.layers.split(",")
     return args
 
 
@@ -217,7 +238,7 @@ def main() -> None:
         raise RuntimeError("--model is missing")
 
     print_gpu_info()
-    model, tokenizer, gpu_device = load_model(args.model, args.model_revision, args.cache_dir, args.layers_arr)
+    model, tokenizer, gpu_device = load_model(args.model, args.model_revision, args.cache_dir, args.layer_strs)
     run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 
 

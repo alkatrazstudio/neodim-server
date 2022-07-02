@@ -270,13 +270,19 @@ Listen on this IP address.
 
 Listen on this port.
 
-### `layers`: int[] (optional, default="1")
+### `layers`: (int|"a")[] (optional, default="1")
 
 Distribute model's layers on GPUs.
 
 It's a comma-separated list of integers.
 Each integer represents how many layers should be put on a GPU with that index.
 All unspecified layers will be put on CPU.
+
+You can also use a letter `a` (stands for "**a**vailable")
+for one GPU to put all unspecified layers on it.
+For example, `--layers=a` will put all model's layers on the first GPU.
+`--layers=2,a,3` will put 2 layers on the first GPU, 3 layers on the third GPU
+and the rest of the layers on the second GPU.
 
 GPUs and their indexes are shown at server startup.
 The number of layers is shown after the model is loaded,
@@ -291,7 +297,8 @@ This will put no layers on the first GPU, 2 layers on the second GPU and the res
 
 The more layers you put on GPUs the faster the model will work
 and the more VRAM it will use.
-You can also put all layers on CPU (`--layers=0`) or put all layers on GPUs.
+You can also put all layers on CPU (`--layers=0`)
+or put all layers on GPUs (e.g. `--layers=a`).
 
 
 ## Prompt and preamble
