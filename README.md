@@ -287,7 +287,7 @@ and the rest of the layers on the second GPU.
 GPUs and their indexes are shown at server startup.
 The number of layers is shown after the model is loaded,
 but you also can find this number in `config.json` of the model
-(see `n_layer` or `num_layers` fields).
+(see `n_layer`, `num_layers` or `num_hidden_layers` fields).
 
 For example:
 ```sh
