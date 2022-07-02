@@ -99,7 +99,7 @@ def load_model(
     t_start = time.time()
 
     config = ai.load_config(model_path, model_revision, cache_dir)
-    model_type = tools.model_type_by_config(config)
+    model_type = tools.model_type(config)
 
     if layers is None:
         layers = [1]

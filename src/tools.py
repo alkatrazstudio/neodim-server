@@ -3,7 +3,7 @@
 
 import gc
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 import torch
 from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel
@@ -19,21 +19,8 @@ class ModelType(Enum):
     OPT = "opt"
 
 
-def model_type(model: PreTrainedModel) -> ModelType:
-    if isinstance(model, GPTNeoPreTrainedModel):
-        return ModelType.GPT_NEO
-    if isinstance(model, GPTJPreTrainedModel):
-        return ModelType.GPT_J
-    if isinstance(model, XGLMPreTrainedModel):
-        return ModelType.XGLM
-    if isinstance(model, GPT2PreTrainedModel):
-        return ModelType.GPT2
-    if isinstance(model, OPTPreTrainedModel):
-        return ModelType.OPT
-    raise RuntimeError(f"Unsupported model class: {model.__class__.__name__}")
-
-
-def model_type_by_config(config: PretrainedConfig) -> ModelType:
+def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> ModelType:
+    config = model_or_config if isinstance(model_or_config, PretrainedConfig) else model_or_config.config
     if isinstance(config, GPTNeoPreTrainedModel.config_class):
         return ModelType.GPT_NEO
     if isinstance(config, GPTJPreTrainedModel.config_class):
@@ -44,7 +31,7 @@ def model_type_by_config(config: PretrainedConfig) -> ModelType:
         return ModelType.GPT2
     if isinstance(config, OPTPreTrainedModel.config_class):
         return ModelType.OPT
-    raise RuntimeError(f"Unsupported config class: {config.__class__.__name__}")
+    raise RuntimeError(f"Unsupported model config class: {config.__class__.__name__}")
 
 
 def num_layers(config: PretrainedConfig) -> int:
