@@ -35,7 +35,7 @@ function loadSettings()
 {
     try {
         const rawVal = localStorage.getItem(PARAMS_KEY)
-        const request = JSON.parse(rawVal) || {}
+        const request = JSON.parse(rawVal) ?? {}
         return request
     } catch(e) {
         return {}
@@ -83,28 +83,28 @@ function main()
     const errorArea = document.querySelector('#error output')
 
     const storedRequest = loadSettings()
-    preambleEl.value = (storedRequest.preamble || '').trim()
-    promptEl.value = (storedRequest.prompt || '').trim()
+    preambleEl.value = (storedRequest.preamble ?? '').trim()
+    promptEl.value = (storedRequest.prompt ?? '').trim()
 
-    optEndpointEl.value = storedRequest.endpoint || 'http://127.0.0.1:8787/generate'
-    optGeneratedTokensCountEl.value = storedRequest.generated_tokens_count || 32
-    optMaxTotalTokensEl.value = storedRequest.max_total_tokens || 1024
-    optTemperatureEl.value = storedRequest.temperature || 0.6
-    optTopKEl.value = storedRequest.top_k || 0
-    optTopPEl.value = storedRequest.top_p || 0
-    optTfsEl.value = storedRequest.tfs || 0.95
-    optTypicalEl.value = storedRequest.typical || 0
-    optTopAEl.value = storedRequest.top_a || 0
-    optRepetitionPenaltyEl.value = storedRequest.repetition_penalty || 1.25
-    optRepetitionPenaltyRangeEl.value = storedRequest.repetition_penalty_range || 512
-    optRepetitionPenaltySlopeEl.value = storedRequest.repetition_penalty_slope || 0
-    optRepetitionPenaltyIncludePreambleEl.value = storedRequest.repetition_penalty_include_preamble || false
-    optRepetitionPenaltyIncludeGeneratedEl.value = storedRequest.repetition_penalty_include_generated || 'slide'
-    optRepetitionPenaltyTruncateToInputEl.value = storedRequest.repetition_penalty_truncate_to_input || false
-    optTruncatePromptUntilEl.value = JSON.stringify(storedRequest.truncate_prompt_until || [' '])
-    optStopStringsEl.value = JSON.stringify(storedRequest.stop_strings || [])
+    optEndpointEl.value = storedRequest.endpoint ?? 'http://127.0.0.1:8787/generate'
+    optGeneratedTokensCountEl.value = storedRequest.generated_tokens_count ?? 32
+    optMaxTotalTokensEl.value = storedRequest.max_total_tokens ?? 1024
+    optTemperatureEl.value = storedRequest.temperature ?? 0.6
+    optTopKEl.value = storedRequest.top_k ?? 0
+    optTopPEl.value = storedRequest.top_p ?? 0
+    optTfsEl.value = storedRequest.tfs ?? 0.95
+    optTypicalEl.value = storedRequest.typical ?? 0
+    optTopAEl.value = storedRequest.top_a ?? 0
+    optRepetitionPenaltyEl.value = storedRequest.repetition_penalty ?? 1.25
+    optRepetitionPenaltyRangeEl.value = storedRequest.repetition_penalty_range ?? 512
+    optRepetitionPenaltySlopeEl.value = storedRequest.repetition_penalty_slope ?? 0
+    optRepetitionPenaltyIncludePreambleEl.value = storedRequest.repetition_penalty_include_preamble ?? false
+    optRepetitionPenaltyIncludeGeneratedEl.value = storedRequest.repetition_penalty_include_generated ?? 'slide'
+    optRepetitionPenaltyTruncateToInputEl.value = storedRequest.repetition_penalty_truncate_to_input ?? false
+    optTruncatePromptUntilEl.value = JSON.stringify(storedRequest.truncate_prompt_until ?? [' '])
+    optStopStringsEl.value = JSON.stringify(storedRequest.stop_strings ?? [])
 
-    const locale = navigator.languages[0] || 'en-US'
+    const locale = navigator.languages[0] ?? 'en-US'
     const decimalFormat = new Intl.NumberFormat(locale, {
         maximumFractionDigits: 1,
         useGrouping: false
