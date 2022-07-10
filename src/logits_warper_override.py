@@ -6,16 +6,19 @@ from typing import Optional
 
 from transformers import LogitsProcessorList, PreTrainedModel
 
-from third_party.warpers import TailFreeLogitsWarper
+from third_party.warpers import TailFreeLogitsWarper, TypicalLogitsWarper
 
 
 # Transformers do not provide any way to set custom logits warpers
-def override_get_logits_warper(model: PreTrainedModel, tfs: Optional[float]) -> None:
+def override_get_logits_warper(model: PreTrainedModel, tfs: Optional[float], typical: Optional[float]) -> None:
     def new_get_logits_warper(self, *args, **kwargs) -> LogitsProcessorList:
         processors = self.original_get_logits_warper(*args, **kwargs)
         if tfs is not None:
             tfs_processor = TailFreeLogitsWarper(tfs=tfs)
             processors.append(tfs_processor)
+        if typical is not None:
+            typical_processor = TypicalLogitsWarper(typical=typical)
+            processors.append(typical_processor)
         return processors
 
     model.original_get_logits_warper = model._get_logits_warper

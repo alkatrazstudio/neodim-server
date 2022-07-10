@@ -465,6 +465,23 @@ Recommended values: `0.9 - 0.95`.
 
 By default, this filter is off.
 
+### `typical`: float (optional)
+
+Typical sampling will pick samples based not on appearance probability,
+but on expected amount of information produced.
+It can make the resulting text more interesting by excluding the most likely words
+if there's a big pool of words to choose from for the next token.
+
+Lower values will make the generated text to maintain the same "rhythm" as the prompt.
+Higher values will include more choices for the next token,
+and the text will be more random.
+
+Allowed range: `0 < x < 1`.
+Recommended values: `0.2` is assumed to be a good choice for a generic story-writing;
+however, higher values may also produce good results, depending on the expected result.
+
+By default, this filter is off.
+
 ### `repetition_penalty`: float (optional)
 
 Change the probability of the tokens that are already included in the input text (`preamble` and/or `prompt`).
