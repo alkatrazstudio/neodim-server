@@ -42,6 +42,18 @@ function loadSettings()
     }
 }
 
+function resetSettings()
+{
+    const curSettings = loadSettings()
+    const preamble = curSettings.preamble
+    const prompt = curSettings.prompt
+
+    localStorage.removeItem(PARAMS_KEY)
+    saveSettings({preamble, prompt})
+
+    location.reload()
+}
+
 function fromJSON(s, def)
 {
     try {
@@ -210,6 +222,17 @@ main {
 
 #options {
     width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+#options .spacer {
+    flex: 1;
+}
+
+#options #reset-settings {
+    margin-top: 50px;
+    text-align: center;
 }
 
 main aside,
@@ -412,6 +435,12 @@ select {
                 Stop strings (JSON)
                 <input type="text"/>
             </label>
+        </section>
+
+        <div class="spacer"></div>
+
+        <section id="reset-settings">
+            <button onclick="resetSettings()">Reset to default</button>
         </section>
     </aside>
 
