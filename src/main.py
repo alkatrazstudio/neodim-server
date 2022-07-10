@@ -134,7 +134,7 @@ def load_model(
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
-    model, tokenizer = ai.load(model_path, model_revision, cache_dir, device_map)
+    model, tokenizer = ai.load_model(model_path, model_revision, cache_dir, device_map)
 
     t_elapsed = round(time.time() - t_start)
     print(f"Model {model.__class__.__name__} ({model_type.name}) loaded in {t_elapsed}s")

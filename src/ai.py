@@ -86,7 +86,7 @@ def load_config(
     return cfg
 
 
-def load(
+def load_model(
     model_path: str,
     model_revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
@@ -119,11 +119,6 @@ def load(
         model.config.pad_token_id = model.config.eos_token_id
 
     return model, tokenizer
-
-
-def move_to_gpu(model: PreTrainedModel, gpu_device: int) -> PreTrainedModel:
-    model = model.half().to(gpu_device)
-    return model
 
 
 def move_to_cpu(model: PreTrainedModel) -> PreTrainedModel:
