@@ -81,11 +81,19 @@ Neodim Server also lacks a lot of sanity checks and is not foolproof to use.
 
 ## Requirements
 
-* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), preferably with up-to-date drivers, supporting at least CUDA v11.6.
+* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), supporting at least CUDA v11.6.
 * Appropriate amount of free VRAM (e.g., at least 5GB of free VRAM for `GPT-J-6B` model)
 * Appropriate amount or free RAM (e.g., at least 15GB of free RAM for `GPT-J-6B` model)
 * Python 3.9+ (check with `python3 --version`)
 * Preferably Linux (Windows may work, but the compatibility is not tested and not actively supported)
+
+You may also need to update your GPU drivers.
+On Ubuntu you can do it with `sudo ubuntu-drivers install`.
+To download the repo and (optionally) models, you will need Git.
+On Ubuntu you can install it with `sudo apt install git`.
+To run the server the recommended way (via `start.sh`, see below)
+you will need Python Virtual Environment tools.
+On Ubuntu you can install them with `sudo apt install python3-venv`.
 
 
 ## Quick Start
