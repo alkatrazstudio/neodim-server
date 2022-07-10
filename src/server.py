@@ -21,6 +21,7 @@ class RequestData:
     top_p: Optional[float]
     tfs: Optional[float]
     typical: Optional[float]
+    top_a: Optional[float]
     repetition_penalty: Optional[float]
     repetition_penalty_range: Optional[int]
     repetition_penalty_slope: Optional[float]
@@ -42,6 +43,7 @@ class RequestData:
         self.top_p = RequestData.get_val(data, "top_p", float)
         self.tfs = RequestData.get_val(data, "tfs", float)
         self.typical = RequestData.get_val(data, "typical", float)
+        self.top_a = RequestData.get_val(data, "top_a", float)
         self.repetition_penalty = RequestData.get_val(data, "repetition_penalty", float)
         self.repetition_penalty_range = RequestData.get_val(data, "repetition_penalty_range", int)
         self.repetition_penalty_slope = RequestData.get_val(data, "repetition_penalty_slope", float)
@@ -63,6 +65,8 @@ class RequestData:
             self.tfs = None
         if self.typical == 0:
             self.typical = None
+        if self.top_a == 0:
+            self.top_a = None
         if self.temperature == 0:
             self.temperature = None
         if self.repetition_penalty == 0:

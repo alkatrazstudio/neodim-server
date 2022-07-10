@@ -153,6 +153,7 @@ def generate(
     top_k: Optional[float] = None,
     tfs: Optional[float] = None,
     typical: Optional[float] = None,
+    top_a: Optional[float] = None,
     sequences_count: int = 1
 ) -> GeneratedOutput:
     if not preamble and not prompt:
@@ -221,7 +222,7 @@ def generate(
         else:
             in_tensor = in_tensor.to(gpu_device)
 
-        lwo.override_get_logits_warper(model, tfs, typical)
+        lwo.override_get_logits_warper(model, tfs, typical, top_a)
         try:
             out_tensor = model.generate(
                 in_tensor,

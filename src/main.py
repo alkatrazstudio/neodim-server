@@ -46,6 +46,7 @@ def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer,
             top_k=req.top_k,
             tfs=req.tfs,
             typical=req.typical,
+            top_a=req.top_a,
             temperature=req.temperature,
             sequences_count=req.sequences_count,
             gpu_device=gpu_device

@@ -64,6 +64,7 @@ function main()
     const optTopPEl = document.querySelector('#option-top-p input')
     const optTfsEl = document.querySelector('#option-tfs input')
     const optTypicalEl = document.querySelector('#option-typical input')
+    const optTopAEl = document.querySelector('#option-top-a input')
     const optRepetitionPenaltyEl = document.querySelector('#option-repetition-penalty input')
     const optRepetitionPenaltyRangeEl = document.querySelector('#option-repetition-penalty-range input')
     const optRepetitionPenaltySlopeEl = document.querySelector('#option-repetition-penalty-slope input')
@@ -93,6 +94,7 @@ function main()
     optTopPEl.value = storedRequest.top_p || 0
     optTfsEl.value = storedRequest.tfs || 0.95
     optTypicalEl.value = storedRequest.typical || 0
+    optTopAEl.value = storedRequest.top_a || 0
     optRepetitionPenaltyEl.value = storedRequest.repetition_penalty || 1.25
     optRepetitionPenaltyRangeEl.value = storedRequest.repetition_penalty_range || 512
     optRepetitionPenaltySlopeEl.value = storedRequest.repetition_penalty_slope || 0
@@ -129,6 +131,7 @@ function main()
             top_p: parseFloat(optTopPEl.value),
             tfs: parseFloat(optTfsEl.value),
             typical: parseFloat(optTypicalEl.value),
+            top_a: parseFloat(optTopAEl.value),
             repetition_penalty: parseFloat(optRepetitionPenaltyEl.value),
             repetition_penalty_range: parseFloat(optRepetitionPenaltyRangeEl.value),
             repetition_penalty_slope: parseFloat(optRepetitionPenaltySlopeEl.value),
@@ -348,6 +351,12 @@ select {
         <section id="option-typical">
             <label>
                 Typical sampling
+                <input type="number" min="0" max="1" step="0.01"/>
+            </label>
+        </section>
+        <section id="option-top-a">
+            <label>
+                Top a
                 <input type="number" min="0" max="1" step="0.01"/>
             </label>
         </section>

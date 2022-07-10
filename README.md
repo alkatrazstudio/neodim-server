@@ -482,6 +482,18 @@ however, higher values may also produce good results, depending on the expected 
 
 By default, this filter is off.
 
+### `top_a`: float (optional)
+
+Top-a sampling will filter out any tokens that are less likely to appear than the top-rated token.
+
+Lower values will keep more tokens.
+The value of `1` will only allow the top-rated token to be chosen.
+
+Allowed range: `0 < x <= 1`.
+Recommended values: `0.8 - 0.95`.
+
+By default, this filter is off.
+
 ### `repetition_penalty`: float (optional)
 
 Change the probability of the tokens that are already included in the input text (`preamble` and/or `prompt`).
