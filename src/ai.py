@@ -13,6 +13,7 @@ import tokenizer as tok
 import tools
 from dev_map import DeviceMap
 from gpu_info import GpuInfo, GpuMemStats
+from logits_warper_override import WarperId
 from memory_tracing_criteria import MemoryTracingCriteria
 from rep_pen_processor import AdvancedRepetitionPenaltyLogitsProcessor, RepPenGenerated
 from stop_tokens_criteria import StopTokensCriteria
@@ -149,6 +150,7 @@ def generate(
     tfs: Optional[float] = None,
     typical: Optional[float] = None,
     top_a: Optional[float] = None,
+    warpers_order: Optional[list[WarperId]] = None,
     sequences_count: int = 1
 ) -> GeneratedOutput:
     if not preamble and not prompt:
@@ -217,7 +219,12 @@ def generate(
         else:
             in_tensor = in_tensor.to(gpu_device)
 
-        lwo.override_get_logits_warper(model, tfs, typical, top_a)
+        lwo.override_get_logits_warper(
+            model,
+            tfs=tfs,
+            top_a=top_a,
+            order=warpers_order
+        )
         try:
             out_tensor = model.generate(
                 in_tensor,
@@ -231,6 +238,7 @@ def generate(
                 temperature=temperature,
                 top_p=top_p,
                 top_k=top_k,
+                typical_p=typical,
                 stopping_criteria=stop_list,
                 logits_processor=logit_processors,
                 return_dict_in_generate=False

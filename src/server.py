@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, Final, Optional, Type
 
 from ai import GeneratedOutput
+from logits_warper_override import WarperId
 from rep_pen_processor import RepPenGenerated
 
 
@@ -22,6 +23,7 @@ class RequestData:
     tfs: Optional[float]
     typical: Optional[float]
     top_a: Optional[float]
+    warpers_order: list[WarperId]
     repetition_penalty: Optional[float]
     repetition_penalty_range: Optional[int]
     repetition_penalty_slope: Optional[float]
@@ -44,6 +46,7 @@ class RequestData:
         self.tfs = RequestData.get_val(data, "tfs", float)
         self.typical = RequestData.get_val(data, "typical", float)
         self.top_a = RequestData.get_val(data, "top_a", float)
+        self.warpers_order = [WarperId(x) for x in data["warpers_order"]] if "warpers_order" in data else []
         self.repetition_penalty = RequestData.get_val(data, "repetition_penalty", float)
         self.repetition_penalty_range = RequestData.get_val(data, "repetition_penalty_range", int)
         self.repetition_penalty_slope = RequestData.get_val(data, "repetition_penalty_slope", float)

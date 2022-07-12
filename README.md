@@ -494,6 +494,25 @@ Recommended values: `0.8 - 0.95`.
 
 By default, this filter is off.
 
+### `warpers_order`: string[] (optional)
+
+Sets the order in which all of the above filters/sampling methods (called "warpers") are applied.
+
+Can be an array containing the names of filters:
+`"temperature"`, `"top_k"`, `"top_p"`, `"typical"`, `"tfs"` or `"top_a"`.
+By default, these warpers are applied in this order.
+However, the default order may change in future versions,
+so it's better not to rely on it.
+
+You can also specify a special value `"*"` that will imply all unspecified warpers.
+This value is automatically added at the end of `warpers_order` if not specified explicitly.
+
+**Examples:**
+
+- `["tfs", "*", "temperature"]` - apply the tail-free sampling first,
+  then apply everything else except the temperature, then apply the temperature.
+- `["typical"]` - apply the typical sampling first, then apply everything else.
+
 ### `repetition_penalty`: float (optional)
 
 Change the probability of the tokens that are already included in the input text (`preamble` and/or `prompt`).
