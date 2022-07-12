@@ -3,9 +3,9 @@
 
 ## v0.5 (July 2, 2022)
 
-- Changed: Using CUDA 11.6 (to support modern GPUs)
+- Changed: using CUDA 11.6 (to support modern GPUs)
 - Improved: loading models is now 4 times faster
-- Added: GPT2 models now support layers distribution
+- Improved: GPT2 models now support layers distribution
 - Added: support for OPT models
 - Added: use `a` symbol to put all unspecified layers on a GPU
 
