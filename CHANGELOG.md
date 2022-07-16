@@ -1,6 +1,14 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.6 (July 16, 2022)
+
+- Added: typical sampling (`typical` request param)
+- Added: top-a sampling (`top-a` request param)
+- Added: the order of filters/sampling/warpers can now be set (`warpers_order` request param)
+- Added: the playground settings can now be reset to their defaults
+
+
 ## v0.5 (July 2, 2022)
 
 - Changed: using CUDA 11.6 (to support modern GPUs)
