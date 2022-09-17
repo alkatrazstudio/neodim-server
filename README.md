@@ -56,7 +56,6 @@ to provide the actual inference (text generation).
 It can use some [language models from Hugging Face](https://huggingface.co/models?library=pytorch&pipeline_tag=text-generation&sort=downloads)
 (it will download them automatically if needed)
 or locally available models (pre-downloaded from Hugging Face or from anywhere else).
-It mostly targets `GPT-Neo` and `GPT-J` models, but some other models may work too.
 See below for a list of supported models.
 
 After the model is loaded, the web server is started.
@@ -86,7 +85,7 @@ Neodim Server also lacks a lot of sanity checks and is not foolproof to use.
 * Appropriate amount of free VRAM (e.g., at least 5GB of free VRAM for `GPT-J-6B` model)
 * Appropriate amount or free RAM (e.g., at least 15GB of free RAM for `GPT-J-6B` model)
 * Python 3.9+ (check with `python3 --version`)
-* Preferably Linux (Windows may work, but the compatibility is not tested and not actively supported)
+* Preferably Linux (Windows may work, but the compatibility is not tested and not maintained)
 
 You may also need to update your GPU drivers.
 On Ubuntu you can do it with `sudo ubuntu-drivers install`.
@@ -279,7 +278,7 @@ Listen on this IP address.
 
 Listen on this port.
 
-### `layers`: (int|"a")[] (optional, default="1")
+### `layers`: (int|"a")[] (optional, default=1)
 
 Distribute model's layers on GPUs.
 
@@ -307,7 +306,7 @@ This will put no layers on the first GPU, 2 layers on the second GPU and the res
 The more layers you put on GPUs the faster the model will work
 and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`)
-or put all layers on GPUs (e.g. `--layers=a`).
+or put all layers on a single GPU (e.g. `--layers=a`, `--layers=0,a` etc.).
 
 
 ### `precision`: original|float32|float16|int8 (optional, default=float16)
@@ -648,14 +647,7 @@ Then if `truncate_prompt_until = ["."]` then it will be truncated like this:
 <code>&nbsp;And then she left.</code> (notice the space at the beginning).
 If `truncate_prompt_until = [" "]` it may be truncated like this:
 `nice chat. And then she left.`.
-
-The truncation will stop as early as possible,
-however if two or more strings will match the text at the currently analyzed position
-the longer string will be chosen.
-For example, to truncate up to a dot or a dot with a space,
-specify `truncate_prompt_until = [".", ". "]`.
-And the truncated result will be `And then she left.` (without a space at the beginning)
-because the text was truncated with the longest string `". "`.
+The truncation will stop as early as possible.
 
 **NOTE:** If `truncate_prompt_until` is not set
 the truncation will be symbol-by-symbol,
