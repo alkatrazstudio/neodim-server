@@ -13,7 +13,7 @@ import ai
 import dev_map
 import server
 import tools
-from ai import GeneratedOutput
+from ai import GeneratedOutput, ModelPrecision
 from server import Callback, RequestData
 
 
@@ -111,19 +111,20 @@ def parse_layers(layer_strs: Optional[list[str]], layers_count: int) -> list[int
 
 
 def load_model(
-    model_path: str,
-    model_revision: Optional[str] = None,
+    path: str,
+    revision: Optional[str] = None,
+    precision: ModelPrecision = ModelPrecision.FLOAT16,
     cache_dir: Optional[str] = None,
     layer_strs: Optional[list[str]] = None
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
-    if not model_revision:
-        print(f"Loading the model: {model_path}")
+    if not revision:
+        print(f"Loading the model: {path}")
     else:
-        print(f"Loading the model: {model_path} ({model_revision})")
+        print(f"Loading the model: {path} ({revision})")
 
     t_start = time.time()
 
-    config = ai.load_config(model_path, model_revision, cache_dir)
+    config = ai.load_config(path, revision, cache_dir)
     model_type = tools.model_type(config)
 
     layers_count = tools.num_layers(config)
@@ -135,7 +136,13 @@ def load_model(
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
-    model, tokenizer = ai.load_model(model_path, model_revision, cache_dir, device_map)
+    model, tokenizer = ai.load_model(
+        path=path,
+        revision=revision,
+        cache_dir=cache_dir,
+        device_map=device_map,
+        precision=precision
+    )
 
     t_elapsed = round(time.time() - t_start)
     print(f"Model {model.__class__.__name__} ({model_type.name}) loaded in {t_elapsed}s")
@@ -220,6 +227,10 @@ def parse_args() -> Namespace:
                         help="Distribute model's layers between GPUs (pass 0 to not use GPUs). "
                              "Default: 1",
                         default="1")
+    parser.add_argument("--precision",
+                        help=f"Load the model in this precision ({', '.join([x.value for x in ModelPrecision])}). "
+                             f"Default: {ModelPrecision.FLOAT16.value}",
+                        default=ModelPrecision.FLOAT16)
     parser.add_argument("--version",
                         help="Show the version of this Neodim Server",
                         action="store_true")
@@ -227,6 +238,7 @@ def parse_args() -> Namespace:
 
     args.listen_port = int(args.listen_port)
     args.layer_strs = args.layers.split(",")
+    args.precision = ModelPrecision(args.precision)
     return args
 
 
@@ -241,7 +253,13 @@ def main() -> None:
         raise RuntimeError("--model is missing")
 
     print_gpu_info()
-    model, tokenizer, gpu_device = load_model(args.model, args.model_revision, args.cache_dir, args.layer_strs)
+    model, tokenizer, gpu_device = load_model(
+        path=args.model,
+        revision=args.model_revision,
+        precision=args.precision,
+        cache_dir=args.cache_dir,
+        layer_strs=args.layer_strs
+    )
     run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 
 

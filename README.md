@@ -43,6 +43,7 @@ If you have any other OS you need to install Python, Git, Bash and md5sum.
 - [Squeezing the VRAM](#squeezing-the-vram)
   - [Running in console mode](#running-in-console-mode)
   - [Distributing model layers on CPU](#distributing-model-layers-on-cpu)
+  - [Lowering the precision](#lowering-the-precision)
 - [Third-party libraries](#third-party-libraries)
 - [License](#license)
 - [Client applications](#client-applications)
@@ -307,6 +308,39 @@ The more layers you put on GPUs the faster the model will work
 and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`)
 or put all layers on GPUs (e.g. `--layers=a`).
+
+
+### `precision`: original|float32|float16|int8 (optional, default=float16)
+
+Neodim Server can load 16-bit and 32-bit models,
+but using this parameter the model can be load in memory with a specified precision.
+This allows to seek balance between VRAM consumption and the quality of the generated text.
+
+* `float16` - 16-bit floating precision, a.k.a. "half-precision".
+  This is the default.
+* `float32` - 32-bit floating precision, a.k.a. "full-precision".
+  Compared to `float16`, loading the model in `float32` may improve the quality of the generated text,
+  but the model will consume nearly twice as much VRAM.
+* `int8` - 8-bit integer precision.
+  Compared to `float16`, loading the model in `int8` may lower the quality of the generated text,
+  but the model will consume around 1.5 times less VRAM.
+* `original` - use the original precision of the model.
+
+It only makes sense to downgrade the model's precision.
+For example, if you load 16-bit model in 32-bit precision mode
+then it will consume twice as much VRAM, but it won't improve the quality of the generated text.
+
+**Notes about the 8-bit precision:**
+
+1. You need to install CUDA Toolkit.
+   There are several ways to do it:
+   - On Ubuntu: `sudo apt install nvidia-cuda-toolkit`
+   - The official NVIDIA page: https://developer.nvidia.com/cuda-downloads
+   - [Conda](https://docs.conda.io/): `conda install cudatoolkit`
+2. The whole model needs to be on GPUs, e.g. `--layers=a`.
+   You can't leave any layers on CPU.
+3. You can only load 16-bit and 32-bit models in 8-bit mode.
+   Neodim Server can't load 8-bit models directly.
 
 
 ## Prompt and preamble
@@ -860,6 +894,15 @@ but there's very little difference between 1 layer on GPU and 2 layers on GPU.
 Play around with `--layers` parameter to find a suitable combination.
 
 
+### Lowering the precision
+
+By default, the model is loaded in 16-bit floating precision.
+However, it's possible to try to load the model in 8-bit precision.
+This may lower the quality of the generated text, but the model will consume only half as much VRAM.
+There are limitations when loading the model in 8-bit precision.
+See more details in [precision](#precision-originalfloat32float16int8-optional-defaultfloat16) parameter description.
+
+
 ## Third-party libraries
 
 There are some embedded third-party libraries.
@@ -871,6 +914,7 @@ Other direct dependencies:
 * [sentencepiece](https://pypi.org/project/sentencepiece/)
 * [protobuf](https://pypi.org/project/protobuf/)
 * [accelerate](https://pypi.org/project/accelerate/)
+* [bitsandbytes](https://pypi.org/project/bitsandbytes/)
 
 
 ## License

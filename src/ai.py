@@ -2,6 +2,7 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 import torch
@@ -73,6 +74,13 @@ class GeneratedOutput:
         }
 
 
+class ModelPrecision(Enum):
+    ORIGINAL = "original"
+    FLOAT32 = "float32"
+    FLOAT16 = "float16"
+    INT8 = "int8"
+
+
 def load_config(
     model_path: str,
     model_revision: Optional[str] = None,
@@ -88,21 +96,36 @@ def load_config(
 
 
 def load_model(
-    model_path: str,
-    model_revision: Optional[str] = None,
+    path: str,
+    revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    device_map: Optional[DeviceMap] = None
+    device_map: Optional[DeviceMap] = None,
+    precision: ModelPrecision = ModelPrecision.FLOAT16
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
+    args = {}
+    match precision:
+        case ModelPrecision.ORIGINAL:
+            pass
+
+        case ModelPrecision.FLOAT32:
+            args["torch_dtype"] = torch.float32
+
+        case ModelPrecision.FLOAT16:
+            args["torch_dtype"] = torch.float16
+
+        case ModelPrecision.INT8:
+            args["load_in_8bit"] = True
+
     model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        revision=model_revision,
-        torch_dtype=torch.float16,
+        path,
+        revision=revision,
         low_cpu_mem_usage=True,
         cache_dir=cache_dir,
-        device_map=device_map
+        device_map=device_map,
+        **args
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(path)
 
     # These defaults are used when you pass None to a corresponding parameter in model.generate().
     # Set them all to None, so that passing None to generate() will actually mean None.
