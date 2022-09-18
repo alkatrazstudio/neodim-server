@@ -8,7 +8,7 @@ using a selected language model.
 
 Main website: https://github.com/alkatrazstudio/neodim-server
 
-Current stable version: **v0.6** (July 16, 2022) • [CHANGELOG](CHANGELOG.md)
+Current stable version: **v0.7** (September 18, 2022) • [CHANGELOG](CHANGELOG.md)
 
 Repository branches:
 * [master](https://github.com/alkatrazstudio/neodim-server/tree/master) - current stable version

@@ -1,6 +1,13 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.7 (September 18, 2022)
+
+- Added: ability to load the model in 32-bit and 8-bit precisions
+  ([precision](README.md#precision-originalfloat32float16int8-optional-defaultfloat16) CLI param)
+- Fixed: fast tokenizer is not working for OPT models
+
+
 ## v0.6 (July 16, 2022)
 
 - Added: typical sampling (`typical` request param)
