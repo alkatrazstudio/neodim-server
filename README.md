@@ -340,6 +340,7 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
    You can't leave any layers on CPU.
 3. You can only load 16-bit and 32-bit models in 8-bit mode.
    Neodim Server can't load 8-bit models directly.
+4. Only NVIDIA RTX 20xx or later are supported.
 
 
 ## Prompt and preamble
