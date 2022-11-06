@@ -145,7 +145,8 @@ but you can remove it to view the raw JSON response)
   [GPT-J](https://huggingface.co/models?other=gptj),
   [GPT 2](https://huggingface.co/models?other=gpt2),
   [OPT](https://huggingface.co/models?other=opt),
-  [CodeGen](https://huggingface.co/models?other=codegen) - fully supported,
+  [CodeGen](https://huggingface.co/models?other=codegen),
+  [BLOOM](https://huggingface.co/models?other=bloom) - fully supported,
   except some corner cases (like 8-bit models).
 * [XGLM](https://huggingface.co/models?other=xglm) - only some `fairseq` models are supported.
   You may try your luck with

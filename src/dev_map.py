@@ -83,6 +83,15 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
             "transformer.ln_f": DeviceMapValue.CPU_IF_USED,
             "lm_head": DeviceMapValue.FIRST_DEVICE
         }
+    },
+    ModelType.BLOOM: {
+        "layer_key_template": "transformer.h.{layer}",
+        "device_map_template": {
+            "transformer.word_embeddings": DeviceMapValue.FIRST_DEVICE,
+            "transformer.word_embeddings_layernorm": DeviceMapValue.FIRST_DEVICE,
+            "transformer.ln_f": DeviceMapValue.FIRST_DEVICE,
+            "lm_head": DeviceMapValue.FIRST_DEVICE
+        }
     }
 }
 
