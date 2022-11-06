@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 import torch
 from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel
-from transformers import OPTPreTrainedModel, XGLMPreTrainedModel
+from transformers import CodeGenPreTrainedModel, OPTPreTrainedModel, XGLMPreTrainedModel
 from transformers import PretrainedConfig, PreTrainedModel
 
 
@@ -17,6 +17,7 @@ class ModelType(Enum):
     XGLM = "xglm"
     GPT2 = "gpt2"
     OPT = "opt"
+    CODEGEN = "codegen"
 
 
 def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> ModelType:
@@ -31,6 +32,8 @@ def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> Mod
         return ModelType.GPT2
     if isinstance(config, OPTPreTrainedModel.config_class):
         return ModelType.OPT
+    if isinstance(config, CodeGenPreTrainedModel.config_class):
+        return ModelType.CODEGEN
     raise RuntimeError(f"Unsupported model config class: {config.__class__.__name__}")
 
 

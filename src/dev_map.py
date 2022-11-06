@@ -76,6 +76,14 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
             "lm_head": DeviceMapValue.FIRST_DEVICE
         }
     },
+    ModelType.CODEGEN: {
+        "layer_key_template": "transformer.h.{layer}",
+        "device_map_template": {
+            "transformer.wte": DeviceMapValue.FIRST_DEVICE,
+            "transformer.ln_f": DeviceMapValue.CPU_IF_USED,
+            "lm_head": DeviceMapValue.FIRST_DEVICE
+        }
+    }
 }
 
 
