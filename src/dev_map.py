@@ -49,6 +49,14 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
             "lm_head": DeviceMapValue.FIRST_DEVICE
         }
     },
+    ModelType.GPT_NEOX: {
+        "layer_key_template": "gpt_neox.layers.{layer}",
+        "device_map_template": {
+            "gpt_neox.embed_in": DeviceMapValue.FIRST_DEVICE,
+            "gpt_neox.final_layer_norm": DeviceMapValue.CPU_IF_USED,
+            "embed_out": DeviceMapValue.FIRST_DEVICE
+        }
+    },
     ModelType.GPT2: {
         "layer_key_template": "transformer.h.{layer}",
         "device_map_template": {

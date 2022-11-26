@@ -143,6 +143,7 @@ but you can remove it to view the raw JSON response)
 
 * [GPT-Neo](https://huggingface.co/models?other=gpt_neo),
   [GPT-J](https://huggingface.co/models?other=gptj),
+  [GPT-NeoX](https://huggingface.co/models?other=gpt_neox),
   [GPT 2](https://huggingface.co/models?other=gpt2),
   [OPT](https://huggingface.co/models?other=opt),
   [CodeGen](https://huggingface.co/models?other=codegen),
@@ -159,7 +160,7 @@ For example, XGLM and OPT models have trouble with whitespace and newlines.
 ### Notable models
 
 * [EleutherAI models](https://huggingface.co/EleutherAI) -
-  original `GPT-Neo` and `GPT-J` models,
+  original `GPT-Neo`, `GPT-J` and `GPT-NeoX` models,
   not specifically trained for any task
   (jack of all trades, master of none)
 

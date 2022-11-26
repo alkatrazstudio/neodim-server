@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Optional, Union
 
 import torch
-from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel
+from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, GPTNeoXPreTrainedModel
 from transformers import BloomPreTrainedModel, CodeGenPreTrainedModel, OPTPreTrainedModel, XGLMPreTrainedModel
 from transformers import PretrainedConfig, PreTrainedModel
 
@@ -14,6 +14,7 @@ from transformers import PretrainedConfig, PreTrainedModel
 class ModelType(Enum):
     GPT_NEO = "gpt_neo"
     GPT_J = "gptj"
+    GPT_NEOX = "gpt_neox"
     XGLM = "xglm"
     GPT2 = "gpt2"
     OPT = "opt"
@@ -27,6 +28,8 @@ def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> Mod
         return ModelType.GPT_NEO
     if isinstance(config, GPTJPreTrainedModel.config_class):
         return ModelType.GPT_J
+    if isinstance(config, GPTNeoXPreTrainedModel.config_class):
+        return ModelType.GPT_NEOX
     if isinstance(config, XGLMPreTrainedModel.config_class):
         return ModelType.XGLM
     if isinstance(config, GPT2PreTrainedModel.config_class):
