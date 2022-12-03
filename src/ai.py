@@ -21,21 +21,62 @@ from stop_tokens_criteria import StopStringsType, StopTokensCriteria
 
 
 @dataclass
+class RequestData:
+    prompt: str
+    generated_tokens_count: int
+    max_total_tokens: int
+    preamble: str = ""
+    stop_strings: Optional[list[str]] = None
+    stop_strings_type: Optional[StopStringsType] = StopStringsType.STRING
+    stop_strings_required_matches_count: int = 1
+    truncate_prompt_until: Optional[list[str]] = None
+    gpu_device: Optional[int] = 0
+    repetition_penalty: Optional[float] = None
+    repetition_penalty_range: Optional[int] = None
+    repetition_penalty_slope: Optional[float] = None
+    repetition_penalty_include_preamble: bool = False
+    repetition_penalty_include_generated: RepPenGenerated = RepPenGenerated.SLIDE
+    repetition_penalty_truncate_to_input: bool = False
+    repetition_penalty_prompt: Optional[str] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[float] = None
+    tfs: Optional[float] = None
+    typical: Optional[float] = None
+    top_a: Optional[float] = None
+    warpers_order: Optional[list[WarperId]] = None
+    sequences_count: int = 1
+
+    def __post_init__(self):
+        if self.top_p == 0:
+            self.top_p = None
+        if self.top_k == 0:
+            self.top_k = None
+        if self.tfs == 0:
+            self.tfs = None
+        if self.typical == 0:
+            self.typical = None
+        if self.top_a == 0:
+            self.top_a = None
+        if self.temperature == 0:
+            self.temperature = None
+        if self.repetition_penalty == 0:
+            self.repetition_penalty = None
+        if self.repetition_penalty_range is None:
+            self.repetition_penalty_range = 0
+        if self.repetition_penalty_slope == 0:
+            self.repetition_penalty_slope = None
+        if self.repetition_penalty_prompt == "":
+            self.repetition_penalty_prompt = None
+
+
+@dataclass
 class GeneratedSequence:
     generated_text: str
     stop_string: str
     stop_string_match: str
     trimmed_tail: str
     repetition_penalty_text_at_end: str
-
-    def to_dict(self) -> dict:
-        return {
-            "generated_text": self.generated_text,
-            "stop_string": self.stop_string,
-            "stop_string_match": self.stop_string_match,
-            "trimmed_tail": self.trimmed_tail,
-            "repetition_penalty_text_at_end": self.repetition_penalty_text_at_end
-        }
 
 
 @dataclass
@@ -55,25 +96,6 @@ class GeneratedOutput:
     output_tokens_count: int
     sequences: list[GeneratedSequence]
     gpus: list[GpuInfo]
-
-    def to_dict(self) -> dict:
-        return {
-            "original_input_tokens_count": self.original_input_tokens_count,
-            "used_input_tokens_count": self.used_input_tokens_count,
-            "preamble_tokens_count": self.preamble_tokens_count,
-            "used_prompt": self.used_prompt,
-            "original_prompt_tokens_count": self.original_prompt_tokens_count,
-            "used_prompt_tokens_count": self.used_prompt_tokens_count,
-            "repetition_penalty_text_at_start": self.repetition_penalty_text_at_start,
-            "used_repetition_penalty_tokens_count_at_start": self.used_repetition_penalty_tokens_count_at_start,
-            "used_repetition_penalty_range_at_start": self.used_repetition_penalty_range_at_start,
-            "used_repetition_penalty_tokens_count_at_end": self.used_repetition_penalty_tokens_count_at_end,
-            "used_repetition_penalty_range_at_end": self.used_repetition_penalty_range_at_end,
-            "generated_tokens_count": self.generated_tokens_count,
-            "output_tokens_count": self.output_tokens_count,
-            "sequences": [s.to_dict() for s in self.sequences],
-            "gpus": [g.to_dict() for g in self.gpus]
-        }
 
 
 class ModelPrecision(Enum):
@@ -155,53 +177,33 @@ def move_to_cpu(model: PreTrainedModel) -> PreTrainedModel:
 def generate(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
-    prompt: str,
-    gen_tokens_len: int,
-    max_total_tokens: int,
-    preamble: str = "",
-    stop_strings: Optional[list[str]] = None,
-    stop_strings_type: Optional[StopStringsType] = StopStringsType.STRING,
-    stop_strings_required_matches_count: int = 1,
-    truncate_prompt_until: Optional[list[str]] = None,
-    gpu_device: Optional[int] = 0,
-    repetition_penalty: Optional[float] = None,
-    repetition_penalty_range: Optional[int] = None,
-    repetition_penalty_slope: Optional[float] = None,
-    repetition_penalty_include_preamble: bool = False,
-    repetition_penalty_include_generated: RepPenGenerated = RepPenGenerated.SLIDE,
-    repetition_penalty_truncate_to_input: bool = False,
-    repetition_penalty_prompt: Optional[str] = None,
-    temperature: Optional[float] = None,
-    top_p: Optional[float] = None,
-    top_k: Optional[float] = None,
-    tfs: Optional[float] = None,
-    typical: Optional[float] = None,
-    top_a: Optional[float] = None,
-    warpers_order: Optional[list[WarperId]] = None,
-    sequences_count: int = 1
+    request: RequestData,
+    gpu_device: Optional[int] = 0
 ) -> GeneratedOutput:
-    if not preamble and not prompt:
+    r = request
+
+    if not r.preamble and not r.prompt:
         raise RuntimeError("Specify preamble and/or prompt")
 
     mem_stats_arrays = [GpuMemStats.from_all_devices()]
 
-    max_tokens_for_gen = max_total_tokens - gen_tokens_len
-    tok_res = tok.tokenize_input(prompt, preamble, truncate_prompt_until, model, tokenizer, max_tokens_for_gen)
+    max_tokens_for_gen = r.max_total_tokens - r.generated_tokens_count
+    tok_res = tok.tokenize_input(r.prompt, r.preamble, r.truncate_prompt_until, model, tokenizer, max_tokens_for_gen)
     input_tokens_len = len(tok_res.input_tokens)
     sequences = []
 
-    if gen_tokens_len or not input_tokens_len:
-        stop_strings = tools.normalize_str_list(stop_strings)
+    if r.generated_tokens_count or not input_tokens_len:
+        stop_strings = tools.normalize_str_list(r.stop_strings)
         stop_list = StoppingCriteriaList()
         if len(stop_strings):
             stop_criteria = StopTokensCriteria(
                 input_tokens_len=input_tokens_len,
                 stop_strings=stop_strings,
-                stop_strings_type=stop_strings_type,
-                required_matches_count=stop_strings_required_matches_count,
+                stop_strings_type=r.stop_strings_type,
+                required_matches_count=r.stop_strings_required_matches_count,
                 model=model,
                 tokenizer=tokenizer,
-                sequences_count=sequences_count
+                sequences_count=r.sequences_count
             )
             stop_list.append(stop_criteria)
         else:
@@ -210,39 +212,40 @@ def generate(
         stop_list.append(tracing_criteria)
 
         logit_processors = LogitsProcessorList()
-        if repetition_penalty is not None and repetition_penalty_range is not None:
-            if repetition_penalty_prompt:
-                rep_pen_custom_ids = tok.str_to_tokens(repetition_penalty_prompt, model, tokenizer)
-                rep_pen_custom_ids = [rep_pen_custom_ids] * sequences_count
+        if r.repetition_penalty is not None and r.repetition_penalty_range is not None:
+            repetition_penalty_range = r.repetition_penalty_range
+            if r.repetition_penalty_prompt:
+                rep_pen_custom_ids = tok.str_to_tokens(r.repetition_penalty_prompt, model, tokenizer)
+                rep_pen_custom_ids = [rep_pen_custom_ids] * r.sequences_count
                 rep_pen_custom_ids = torch.LongTensor(rep_pen_custom_ids)
-                if gpu_device is None:
+                if r.gpu_device is None:
                     rep_pen_custom_ids = rep_pen_custom_ids.to("cpu")
                 else:
-                    rep_pen_custom_ids = rep_pen_custom_ids.to(gpu_device)
+                    rep_pen_custom_ids = rep_pen_custom_ids.to(r.gpu_device)
 
-                if not repetition_penalty_range:
-                    if repetition_penalty_include_preamble:
+                if not r.repetition_penalty_range:
+                    if r.repetition_penalty_include_preamble:
                         repetition_penalty_range = rep_pen_custom_ids.shape[-1] + tok_res.preamble_tokens_count
                     else:
                         repetition_penalty_range = rep_pen_custom_ids.shape[-1]
             else:
                 rep_pen_custom_ids = None
 
-                if not repetition_penalty_range:
-                    if repetition_penalty_include_preamble:
+                if not r.repetition_penalty_range:
+                    if r.repetition_penalty_include_preamble:
                         repetition_penalty_range = len(tok_res.input_tokens)
                     else:
                         repetition_penalty_range = tok_res.trimmed_prompt_tokens_count
 
             penalty_processor = AdvancedRepetitionPenaltyLogitsProcessor(
-                penalty=repetition_penalty,
+                penalty=r.repetition_penalty,
                 input_len=input_tokens_len,
                 penalty_range=repetition_penalty_range,
-                penalty_slope=repetition_penalty_slope,
-                include_generated=repetition_penalty_include_generated,
+                penalty_slope=r.repetition_penalty_slope,
+                include_generated=r.repetition_penalty_include_generated,
                 preamble_tokens_count=tok_res.preamble_tokens_count,
-                include_preamble=repetition_penalty_include_preamble,
-                truncate_to_input=repetition_penalty_truncate_to_input,
+                include_preamble=r.repetition_penalty_include_preamble,
+                truncate_to_input=r.repetition_penalty_truncate_to_input,
                 prompt_tokens=rep_pen_custom_ids
             )
             logit_processors.append(penalty_processor)
@@ -258,24 +261,24 @@ def generate(
 
         lwo.override_get_logits_warper(
             model,
-            tfs=tfs,
-            top_a=top_a,
-            order=warpers_order
+            tfs=r.tfs,
+            top_a=r.top_a,
+            order=r.warpers_order
         )
         try:
             out_tensor = model.generate(
                 in_tensor,
                 do_sample=True,
-                min_length=input_tokens_len + gen_tokens_len,
-                max_length=input_tokens_len + gen_tokens_len,
+                min_length=input_tokens_len + r.generated_tokens_count,
+                max_length=input_tokens_len + r.generated_tokens_count,
                 use_cache=True,  # insanely slow without the cache (but uses much less VRAM)
-                num_return_sequences=sequences_count,
+                num_return_sequences=r.sequences_count,
                 num_beams=1,
                 num_beam_groups=1,
-                temperature=temperature,
-                top_p=top_p,
-                top_k=top_k,
-                typical_p=typical,
+                temperature=r.temperature,
+                top_p=r.top_p,
+                top_k=r.top_k,
+                typical_p=r.typical,
                 stopping_criteria=stop_list,
                 logits_processor=logit_processors,
                 return_dict_in_generate=False
@@ -300,7 +303,7 @@ def generate(
             used_repetition_penalty_range_at_end = penalty_processor.last_tokens.shape[-1]
             used_repetition_penalty_tokens_count_at_end = penalty_processor.last_range
 
-        input_text_len = len(preamble) + len(tok_res.trimmed_prompt)
+        input_text_len = len(r.preamble) + len(tok_res.trimmed_prompt)
 
         for seq_idx, out_tokens in enumerate(out_tensor):
             if penalty_processor is None or penalty_processor.last_tokens is None:
@@ -341,7 +344,7 @@ def generate(
         used_repetition_penalty_tokens_count_at_end = 0
         out_tokens_len = len(tok_res.input_tokens)
 
-        for _ in range(sequences_count):
+        for _ in range(r.sequences_count):
             seq = GeneratedSequence(
                 generated_text="",
                 stop_string="",

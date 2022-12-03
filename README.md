@@ -947,6 +947,7 @@ Other direct dependencies:
 * [protobuf](https://pypi.org/project/protobuf/)
 * [accelerate](https://pypi.org/project/accelerate/)
 * [bitsandbytes](https://pypi.org/project/bitsandbytes/)
+* [jsons](https://pypi.org/project/jsons/)
 
 
 ## License

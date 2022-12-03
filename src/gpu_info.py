@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
+from dataclasses import dataclass
 
 import torch
 
@@ -37,56 +38,22 @@ class GpuMemStats:
         return stats_array
 
 
+@dataclass
 class GpuInfo:
-    def __init__(
-        self,
-        name: str,
-        memory_total: int,
-        memory_reserved_start: int,
-        memory_allocated_start: int,
-        memory_free_start: int,
-        memory_reserved_end: int,
-        memory_allocated_end: int,
-        memory_free_end: int,
-        memory_reserved_min: int,
-        memory_allocated_min: int,
-        memory_free_min: int,
-        memory_reserved_max: int,
-        memory_allocated_max: int,
-        memory_free_max: int
-    ):
-        self.name = name
-        self.memory_total = memory_total
-        self.memory_reserved_start = memory_reserved_start
-        self.memory_allocated_start = memory_allocated_start
-        self.memory_free_start = memory_free_start
-        self.memory_reserved_end = memory_reserved_end
-        self.memory_allocated_end = memory_allocated_end
-        self.memory_free_end = memory_free_end
-        self.memory_reserved_min = memory_reserved_min
-        self.memory_allocated_min = memory_allocated_min
-        self.memory_free_min = memory_free_min
-        self.memory_reserved_max = memory_reserved_max
-        self.memory_allocated_max = memory_allocated_max
-        self.memory_free_max = memory_free_max
-
-    def to_dict(self) -> dict:
-        return {
-            "name": self.name,
-            "memory_total": self.memory_total,
-            "memory_reserved_start": self.memory_reserved_start,
-            "memory_allocated_start": self.memory_allocated_start,
-            "memory_free_start": self.memory_free_start,
-            "memory_reserved_end": self.memory_reserved_end,
-            "memory_allocated_end": self.memory_allocated_end,
-            "memory_free_end": self.memory_free_end,
-            "memory_reserved_min": self.memory_reserved_min,
-            "memory_allocated_min": self.memory_allocated_min,
-            "memory_free_min": self.memory_free_min,
-            "memory_reserved_max": self.memory_reserved_max,
-            "memory_allocated_max": self.memory_allocated_max,
-            "memory_free_max": self.memory_free_max
-        }
+    name: str
+    memory_total: int
+    memory_reserved_start: int
+    memory_allocated_start: int
+    memory_free_start: int
+    memory_reserved_end: int
+    memory_allocated_end: int
+    memory_free_end: int
+    memory_reserved_min: int
+    memory_allocated_min: int
+    memory_free_min: int
+    memory_reserved_max: int
+    memory_allocated_max: int
+    memory_free_max: int
 
     @staticmethod
     def from_device(gpu_index: int, mem_stats_array: list[GpuMemStats]) -> "GpuInfo":

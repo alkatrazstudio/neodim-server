@@ -21,7 +21,7 @@ AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
 def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: Optional[int]) -> Callback:
-    def request_callback(req: RequestData) -> GeneratedOutput:
+    def request_callback(request: RequestData) -> GeneratedOutput:
         tools.cleanup()
 
         t_start = time.time()
@@ -29,28 +29,8 @@ def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer,
         gen_out = ai.generate(
             model=model,
             tokenizer=tokenizer,
-            prompt=req.prompt,
-            preamble=req.preamble,
-            gen_tokens_len=req.generated_tokens_count,
-            truncate_prompt_until=req.truncate_prompt_until,
-            max_total_tokens=req.max_total_tokens,
-            stop_strings=req.stop_strings,
-            repetition_penalty=req.repetition_penalty,
-            repetition_penalty_range=req.repetition_penalty_range,
-            repetition_penalty_slope=req.repetition_penalty_slope,
-            repetition_penalty_include_preamble=req.repetition_penalty_include_preamble,
-            repetition_penalty_include_generated=req.repetition_penalty_include_generated,
-            repetition_penalty_truncate_to_input=req.repetition_penalty_truncate_to_input,
-            repetition_penalty_prompt=req.repetition_penalty_prompt,
-            top_p=req.top_p,
-            top_k=req.top_k,
-            tfs=req.tfs,
-            typical=req.typical,
-            top_a=req.top_a,
-            warpers_order=req.warpers_order,
-            temperature=req.temperature,
-            sequences_count=req.sequences_count,
-            gpu_device=gpu_device
+            gpu_device=gpu_device,
+            request=request
         )
 
         t_elapsed = round(time.time() - t_start)

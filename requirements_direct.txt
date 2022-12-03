@@ -5,3 +5,4 @@ sentencepiece
 protobuf
 accelerate
 bitsandbytes
+jsons
