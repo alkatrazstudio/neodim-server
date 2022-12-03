@@ -638,6 +638,34 @@ If you use AI as a story-writer for an interactive adventure
 where your actions start with a new paragraph and a `>` prompt,
 you may want to use something like this: `["\n>", "\n\n"]`.
 
+### `stop_strings_type`: enum("string","regex") (optional,default="string")
+
+* **string** - treats `stop_strings` as simple strings and searches for occurrences of these strings.
+
+* **regex** - treats `stop_strings` as regular expressions.
+  The [syntax](https://docs.python.org/3/library/re.html)
+  from the standard Python library will be used
+  (no flags are passed to `re.compile`).
+  When passing regular expressions via JSON you need to escape the ``\`` symbol,
+  for example: `"[\\.\\!\\?]$"`
+
+### `stop_strings_required_matches_count`: int (optional, default=1)
+
+For a `stop_string` to stop the inference, it needs to match this many times in a row.
+Currently, it only really matters for regular expressions with look-aheads.
+For example, you want to stop the inference when a string `Brad` is found,
+but not when it is followed by `bury`.
+The `stop_string` will be `Brad(?!bury)` with `stop_strings_type=regex`.
+Let's assume that the AI generated the string `we saw that Brad` at some point.
+It matches the regular expression, because it is not followed by `bury`,
+but you can't possibly know that the next token won't be `bury`.
+However, if you specify `stop_strings_required_matches_count=2`
+the AI will be required to generate one more token.
+If it's not `bury`, then it means that there were `2` matches in a row
+and the inference needs to be stopped.
+But if the next token is `bury` then the inference continue
+and the "match counter" resets back to the value of `stop_strings_required_matches_count`.
+
 ### `truncate_prompt_until`: string[] (optional)
 
 If the initial `prompt` does not fit into the required number of tokens it needs to be truncated.
@@ -696,12 +724,14 @@ If the request is completed successfully then the result will be an object with 
     {
       "generated_text": " It was the kind of morning that could have been described as perfect, with a soft breeze blowing through the trees and flowers that lined her street",
       "stop_string": ".",
+      "stop_string_match": ".",
       "trimmed_tail": "",
       "repetition_penalty_text_at_end": ", with a soft breeze blowing through the trees and flowers that lined her street"
     },
     {
       "generated_text": " The sky was cloudless and the air had that crisp, clean feeling of being just out side in a forest",
       "stop_string": ".",
+      "stop_string_match": ".",
       "trimmed_tail": "\nThe sun was warm on",
       "repetition_penalty_text_at_end": " feeling of being just out side in a forest.\nThe sun was warm"
     }
@@ -804,6 +834,12 @@ the `generated_text` won't include this stop string and the rest of text
 ### `sequences[].stop_string`: string
 
 Encountered stop string (from `stop_strings`) if any.
+
+### `sequences[].stop_string_match`: string
+
+The text that matched the `stop_string`.
+If `stop_strings_type=string` then it will be the same as the `stop_string`.
+For `stop_strings_type=regex` it will be the text that matched the regular expression.
 
 ### `sequences[].trimmed_tail`: string
 

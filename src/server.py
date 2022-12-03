@@ -9,6 +9,7 @@ from typing import Any, Callable, Final, Optional, Type
 from ai import GeneratedOutput
 from logits_warper_override import WarperId
 from rep_pen_processor import RepPenGenerated
+from stop_tokens_criteria import StopStringsType
 
 
 class RequestData:
@@ -32,6 +33,8 @@ class RequestData:
     repetition_penalty_truncate_to_input: bool
     repetition_penalty_prompt: Optional[str]
     stop_strings: list[str]
+    stop_strings_type: StopStringsType
+    stop_strings_required_matches_count: int = 1
     truncate_prompt_until: list[str]
 
     def __init__(self, data: dict):
@@ -58,6 +61,13 @@ class RequestData:
             else RepPenGenerated.SLIDE
         self.repetition_penalty_prompt = RequestData.get_val(data, "repetition_penalty_prompt", str)
         self.stop_strings = RequestData.get_vals(data, "stop_strings", str)
+        self.stop_strings_type = \
+            StopStringsType(str(data["stop_strings_type"])) \
+            if "stop_strings_type" in data \
+            else StopStringsType.STRING
+        self.stop_strings_required_matches_count = int(data["stop_strings_required_matches_count"]) \
+            if "stop_strings_required_matches_count" in data \
+            else 1
         self.truncate_prompt_until = RequestData.get_vals(data, "truncate_prompt_until", str)
 
         if self.top_p == 0:

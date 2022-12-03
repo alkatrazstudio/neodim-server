@@ -86,6 +86,8 @@ function main()
     const optRepetitionPenaltyTruncateToInputEl = document.querySelector('#option-repetition-penalty-truncate-to-input input')
     const optTruncatePromptUntilEl = document.querySelector('#option-truncate-prompt-until input')
     const optStopStringsEl = document.querySelector('#option-stop-strings input')
+    const optStopStringsTypeEl = document.querySelector('#option-stop-strings-type select')
+    const optStopStringsRequiredMatchesCountEl = document.querySelector('#option-stop-strings-required-matches-count input')
 
     const btnGenerate = document.querySelector('#submit')
     const spinnerEl = document.querySelector('.spinner')
@@ -117,6 +119,8 @@ function main()
     optRepetitionPenaltyTruncateToInputEl.value = storedRequest.repetition_penalty_truncate_to_input ?? false
     optTruncatePromptUntilEl.value = JSON.stringify(storedRequest.truncate_prompt_until ?? [' '])
     optStopStringsEl.value = JSON.stringify(storedRequest.stop_strings ?? [])
+    optStopStringsTypeEl.value = storedRequest.stop_strings_type ?? 'string'
+    optStopStringsRequiredMatchesCountEl.value = storedRequest.stop_strings_required_matches_count ?? 1
 
     const locale = navigator.languages[0] ?? 'en-US'
     const decimalFormat = new Intl.NumberFormat(locale, {
@@ -157,7 +161,9 @@ function main()
             max_total_tokens: parseInt(optMaxTotalTokensEl.value),
             sequences_count: 1,
             truncate_prompt_until: fromJSON(optTruncatePromptUntilEl.value, []),
-            stop_strings: fromJSON(optStopStringsEl.value, [])
+            stop_strings: fromJSON(optStopStringsEl.value, []),
+            stop_strings_type: optStopStringsTypeEl.value,
+            stop_strings_required_matches_count: parseInt(optStopStringsRequiredMatchesCountEl.value)
         }
         saveSettings({
             ...request,
@@ -443,6 +449,21 @@ select {
             <label>
                 Stop strings (JSON)
                 <input type="text"/>
+            </label>
+        </section>
+        <section id="option-stop-strings-type">
+            <label>
+               Stop strings type
+                <select>
+                    <option>string</option>
+                    <option>regex</option>
+                </select>
+            </label>
+        </section>
+        <section id="option-stop-strings-required-matches-count">
+            <label>
+                Stop strings required matches count
+                <input type="number" min="1" max="99"/>
             </label>
         </section>
 

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -17,13 +18,14 @@ from gpu_info import GpuInfo, GpuMemStats
 from logits_warper_override import WarperId
 from memory_tracing_criteria import MemoryTracingCriteria
 from rep_pen_processor import AdvancedRepetitionPenaltyLogitsProcessor, RepPenGenerated
-from stop_tokens_criteria import StopTokensCriteria
+from stop_tokens_criteria import StopStringsType, StopTokensCriteria
 
 
 @dataclass
 class GeneratedSequence:
     generated_text: str
     stop_string: str
+    stop_string_match: str
     trimmed_tail: str
     repetition_penalty_text_at_end: str
 
@@ -31,6 +33,7 @@ class GeneratedSequence:
         return {
             "generated_text": self.generated_text,
             "stop_string": self.stop_string,
+            "stop_string_match": self.stop_string_match,
             "trimmed_tail": self.trimmed_tail,
             "repetition_penalty_text_at_end": self.repetition_penalty_text_at_end
         }
@@ -158,6 +161,8 @@ def generate(
     max_total_tokens: int,
     preamble: str = "",
     stop_strings: Optional[list[str]] = None,
+    stop_strings_type: Optional[StopStringsType] = StopStringsType.STRING,
+    stop_strings_required_matches_count: int = 1,
     truncate_prompt_until: Optional[list[str]] = None,
     gpu_device: Optional[int] = 0,
     repetition_penalty: Optional[float] = None,
@@ -190,7 +195,15 @@ def generate(
         stop_strings = tools.normalize_str_list(stop_strings)
         stop_list = StoppingCriteriaList()
         if len(stop_strings):
-            stop_criteria = StopTokensCriteria(input_tokens_len, stop_strings, model, tokenizer, sequences_count)
+            stop_criteria = StopTokensCriteria(
+                input_tokens_len=input_tokens_len,
+                stop_strings=stop_strings,
+                stop_strings_type=stop_strings_type,
+                required_matches_count=stop_strings_required_matches_count,
+                model=model,
+                tokenizer=tokenizer,
+                sequences_count=sequences_count
+            )
             stop_list.append(stop_criteria)
         tracing_criteria = MemoryTracingCriteria(mem_stats_arrays)
         stop_list.append(tracing_criteria)
@@ -302,11 +315,24 @@ def generate(
             trim_pos = -1
             stop_len = -1
             stop_string = ""
+            stop_string_match = ""
 
             for stop_txt in stop_strings:
-                stop_text_pos = gen_txt.find(stop_txt)
+                if stop_strings_type == StopStringsType.REGEX:
+                    match = re.compile(stop_txt).search(gen_txt)
+                    if match:
+                        (stop_text_pos, end) = match.span()
+                        stop_string_match = gen_txt[stop_text_pos:end]
+                    else:
+                        stop_text_pos = -1
+                        stop_string_match = ""
+                else:
+                    stop_text_pos = gen_txt.find(stop_txt)
+                    stop_string_match = stop_txt
+
                 if stop_text_pos != -1:
-                    new_stop_len = len(stop_txt)
+                    stop_len = len(stop_string_match)
+                    new_stop_len = stop_len
                     new_trim_pos = stop_text_pos
                     if trim_pos == -1 or new_trim_pos < trim_pos:
                         trim_pos = new_trim_pos
@@ -323,6 +349,7 @@ def generate(
             seq = GeneratedSequence(
                 generated_text=gen_txt_trimmed,
                 stop_string=stop_string,
+                stop_string_match=stop_string_match,
                 trimmed_tail=trimmed_tail,
                 repetition_penalty_text_at_end=repetition_penalty_text_at_end
             )
@@ -339,6 +366,7 @@ def generate(
             seq = GeneratedSequence(
                 generated_text="",
                 stop_string="",
+                stop_string_match="",
                 trimmed_tail="",
                 repetition_penalty_text_at_end=""
             )
