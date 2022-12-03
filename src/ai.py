@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -205,6 +204,8 @@ def generate(
                 sequences_count=sequences_count
             )
             stop_list.append(stop_criteria)
+        else:
+            stop_criteria = None
         tracing_criteria = MemoryTracingCriteria(mem_stats_arrays)
         stop_list.append(tracing_criteria)
 
@@ -312,38 +313,16 @@ def generate(
 
             gen_txt = out_txt[input_text_len:]
 
-            trim_pos = -1
-            stop_len = -1
-            stop_string = ""
-            stop_string_match = ""
-
-            for stop_txt in stop_strings:
-                if stop_strings_type == StopStringsType.REGEX:
-                    match = re.compile(stop_txt).search(gen_txt)
-                    if match:
-                        (stop_text_pos, end) = match.span()
-                        stop_string_match = gen_txt[stop_text_pos:end]
-                    else:
-                        stop_text_pos = -1
-                        stop_string_match = ""
-                else:
-                    stop_text_pos = gen_txt.find(stop_txt)
-                    stop_string_match = stop_txt
-
-                if stop_text_pos != -1:
-                    stop_len = len(stop_string_match)
-                    new_stop_len = stop_len
-                    new_trim_pos = stop_text_pos
-                    if trim_pos == -1 or new_trim_pos < trim_pos:
-                        trim_pos = new_trim_pos
-                        stop_len = new_stop_len
-                        stop_string = stop_txt
-
-            if trim_pos != -1:
-                trimmed_tail = gen_txt[trim_pos + stop_len:]
-                gen_txt_trimmed = gen_txt[:trim_pos]
+            if stop_criteria and stop_criteria.matches[seq_idx]:
+                match = stop_criteria.matches[seq_idx]
+                stop_string = match.stop_string
+                stop_string_match = match.match
+                gen_txt_trimmed = gen_txt[0:match.start_index]
+                trimmed_tail = gen_txt[match.start_index + len(match.match):]
             else:
                 gen_txt_trimmed = gen_txt
+                stop_string = ""
+                stop_string_match = ""
                 trimmed_tail = ""
 
             seq = GeneratedSequence(

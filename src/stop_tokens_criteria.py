@@ -2,9 +2,9 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 import re
+from dataclasses import dataclass
 from enum import Enum
-from re import Pattern
-from typing import Union
+from typing import Optional
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteria
@@ -17,8 +17,15 @@ class StopStringsType(Enum):
     REGEX = "regex"
 
 
+@dataclass
+class StopStringMatch:
+    stop_string: str
+    start_index: int
+    match: str
+
+
 class StopTokensCriteria(StoppingCriteria):
-    stop_strings: list[Union[str, Pattern[str]]]
+    matches: list[Optional[StopStringMatch]]
 
     def __init__(
         self,
@@ -35,16 +42,15 @@ class StopTokensCriteria(StoppingCriteria):
         super().__init__(*args, **kwargs)
 
         self.input_tokens_len = input_tokens_len
+        self.stop_strings = stop_strings
         if stop_strings_type == StopStringsType.REGEX:
-            self.stop_strings = [re.compile(s) for s in stop_strings]
-        else:
-            self.stop_strings = stop_strings
+            self.stop_regexes = [re.compile(s) for s in stop_strings]
 
         self.stop_strings_type = stop_strings_type
         self.tokenizer = tokenizer
         self.model = model
 
-        self.is_stopped = [False for _ in range(sequences_count)]
+        self.matches = [None for _ in range(sequences_count)]
         self.required_matches_count = required_matches_count
         self.matches_left = [
             [required_matches_count for _ in range(len(stop_strings))]
@@ -59,7 +65,7 @@ class StopTokensCriteria(StoppingCriteria):
         # Tokens can represent any text, so we can't just compare input_ids to encoded stop_strings.
         # E.g. if we compare to " " token directly, the inference won't stop on "! " token.
         for seq_index, input_tokens in enumerate(input_ids):
-            if self.is_stopped[seq_index]:
+            if self.matches[seq_index]:
                 continue
 
             total_len = input_tokens.shape[0]
@@ -84,18 +90,27 @@ class StopTokensCriteria(StoppingCriteria):
 
             for str_index, stop_string in enumerate(self.stop_strings):
                 if self.stop_strings_type == StopStringsType.REGEX:
-                    match = stop_string.search(analyzed_text)
-                    has_match = match is not None
+                    rx_match = self.stop_regexes[str_index].search(analyzed_text)
+                    match = StopStringMatch(
+                        stop_string=stop_string,
+                        start_index=rx_match.start(),
+                        match=analyzed_text[rx_match.start():rx_match.end()]
+                    ) if rx_match else None
                 else:
-                    has_match = analyzed_text.find(stop_string) >= 0
-                if has_match:
+                    start_index = analyzed_text.find(stop_string)
+                    match = StopStringMatch(
+                        stop_string=stop_string,
+                        start_index=start_index,
+                        match=stop_string
+                    ) if start_index >= 0 else None
+                if match:
                     self.matches_left[seq_index][str_index] = self.matches_left[seq_index][str_index] - 1
                     if self.matches_left[seq_index][str_index] <= 0:
-                        self.is_stopped[seq_index] = True
+                        self.matches[seq_index] = match
                 else:
                     self.matches_left[seq_index][str_index] = self.required_matches_count
-                if self.is_stopped[seq_index]:
+                if self.matches[seq_index]:
                     break
 
-        all_stopped = all(self.is_stopped)
+        all_stopped = all(self.matches)
         return all_stopped
