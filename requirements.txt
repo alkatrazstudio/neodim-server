@@ -1,4 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu116
+--extra-index-url https://download.pytorch.org/whl/cu117
 accelerate==0.13.2
 bitsandbytes==0.35.4
 certifi==2022.9.24
