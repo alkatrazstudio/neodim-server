@@ -645,8 +645,12 @@ you may want to use something like this: `["\n>", "\n\n"]`.
 * **regex** - treats `stop_strings` as regular expressions.
   The syntax from the [regex package](https://pypi.org/project/regex/)
   will be used (no flags are passed to `regex.compile`).
+  An example of stopping at the end of sentence:
+  `(?i)(?<!\W(dr|jr|mr|mrs|ms|prof|sr|st))[\.\!\?](?=\s)`.
   When passing regular expressions via JSON you need to escape the ``\`` symbol,
-  for example: `"[\\.\\!\\?]$"`
+  for example to use `[\.\!\?]` as the regular expression,
+  you need to pass this JSON string: `[\\.\\!\\?]`.
+  Note that using regular expressions may result in slower inference.
 
 ### `stop_strings_required_matches_count`: int (optional, default=1)
 
