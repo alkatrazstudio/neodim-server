@@ -643,9 +643,8 @@ you may want to use something like this: `["\n>", "\n\n"]`.
 * **string** - treats `stop_strings` as simple strings and searches for occurrences of these strings.
 
 * **regex** - treats `stop_strings` as regular expressions.
-  The [syntax](https://docs.python.org/3/library/re.html)
-  from the standard Python library will be used
-  (no flags are passed to `re.compile`).
+  The syntax from the [regex package](https://pypi.org/project/regex/)
+  will be used (no flags are passed to `regex.compile`).
   When passing regular expressions via JSON you need to escape the ``\`` symbol,
   for example: `"[\\.\\!\\?]$"`
 
@@ -948,6 +947,7 @@ Other direct dependencies:
 * [accelerate](https://pypi.org/project/accelerate/)
 * [bitsandbytes](https://pypi.org/project/bitsandbytes/)
 * [jsons](https://pypi.org/project/jsons/)
+* [regex](https://pypi.org/project/regex/)
 
 
 ## License

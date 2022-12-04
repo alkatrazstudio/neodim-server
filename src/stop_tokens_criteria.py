@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
 import torch
+from regex import regex
 from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteria
 
 import tokenizer as tok
@@ -44,7 +44,7 @@ class StopTokensCriteria(StoppingCriteria):
         self.input_tokens_len = input_tokens_len
         self.stop_strings = stop_strings
         if stop_strings_type == StopStringsType.REGEX:
-            self.stop_regexes = [re.compile(s) for s in stop_strings]
+            self.stop_regexes = [regex.compile(s) for s in stop_strings]
 
         self.stop_strings_type = stop_strings_type
         self.tokenizer = tokenizer
