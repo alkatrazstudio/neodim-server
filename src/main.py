@@ -137,16 +137,10 @@ def load_model(
         gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
         print(f"Distributed {gpu_layers_count} layer(s) to {gpus_count} GPU(s), and {cpu_layers_count} layers to CPU")
     else:
-        if gpu_layers_count == 0:
-            print("Moving the entire model to CPU")
-            model = ai.move_to_cpu(model)
-            gpu_device = None
-        else:
-            layers_str = ",".join(str(layer) for layer in layers)
-            raise RuntimeError(
-                f"Layer distribution ({layers_str}) is not supported by the current model "
-                f"{model.__class__.__name__} ({model_type.name})"
-            )
+        print("Moving the entire model to CPU")
+        model = ai.move_to_cpu(model)
+        gpu_device = None
+
     print()
 
     return model, tokenizer, gpu_device

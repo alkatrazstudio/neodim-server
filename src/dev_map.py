@@ -106,9 +106,6 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
 
 
 def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Optional[DeviceMap]:
-    if model_type not in DEVICE_MAP_TEMPLATES:
-        return None
-
     gpu_layers_count = sum(gpu_layers)
     if not gpu_layers_count:
         return None
