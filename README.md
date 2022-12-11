@@ -339,8 +339,7 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
    - On Ubuntu: `sudo apt install nvidia-cuda-toolkit`
    - The official NVIDIA page: https://developer.nvidia.com/cuda-downloads
    - [Conda](https://docs.conda.io/): `conda install cudatoolkit`
-2. The whole model needs to be on GPUs, e.g. `--layers=a`.
-   You can't leave any layers on CPU.
+2. CPU-layers won't be converted to 8-bit.
 3. You can only load 16-bit and 32-bit models in 8-bit mode.
    Neodim Server can't load 8-bit models directly.
 4. Only NVIDIA RTX 20xx or later are supported.

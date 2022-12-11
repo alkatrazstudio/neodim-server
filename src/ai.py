@@ -124,7 +124,8 @@ def load_model(
     revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
     device_map: Optional[DeviceMap] = None,
-    precision: ModelPrecision = ModelPrecision.FLOAT16
+    precision: ModelPrecision = ModelPrecision.FLOAT16,
+    load_in_8bit_skip_modules: Optional[list[str]] = None
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     args = {}
     match precision:
@@ -146,6 +147,7 @@ def load_model(
         low_cpu_mem_usage=True,
         cache_dir=cache_dir,
         device_map=device_map,
+        load_in_8bit_skip_modules=load_in_8bit_skip_modules,
         **args
     )
 

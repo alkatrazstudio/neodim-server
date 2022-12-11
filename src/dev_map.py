@@ -18,6 +18,7 @@ class DeviceMapInfo(TypedDict):
 
 
 DeviceMap = dict[str, Union[str, int]]
+DEVICE_CPU: Final[str] = "cpu"
 
 
 class DeviceMapDistribution(Enum):
@@ -116,12 +117,12 @@ def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Op
     device_map_template = DEVICE_MAP_TEMPLATES[model_type]["device_map_template"]
 
     if gpu_layers_count == 0:
-        first_device = "cpu"
+        first_device = DEVICE_CPU
     else:
         first_device = next(i for i, layer in enumerate(gpu_layers) if layer > 0)
 
     cpu_layers_count = layers_count - gpu_layers_count
-    cpu_if_used = "cpu" if cpu_layers_count > 0 else first_device
+    cpu_if_used = DEVICE_CPU if cpu_layers_count > 0 else first_device
 
     device_map: DeviceMap = {}
     for (key, val) in device_map_template.items():
@@ -146,7 +147,15 @@ def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Op
 
     for _ in range(cpu_layers_count):
         layer_key = layer_key_template.format(layer=layer_index)
-        device_map[layer_key] = "cpu"
+        device_map[layer_key] = DEVICE_CPU
         layer_index += 1
 
     return device_map
+
+
+def get_modules_to_skip_for_int8(device_map: DeviceMap) -> Optional[list[str]]:
+    layer_paths = [path for path, device in device_map.items() if device == DEVICE_CPU]
+
+    # adding lm_head based on comment from get_keys_to_not_convert in transformers/utils/bitsandbytes.py
+    # which says "for CausalLM modules we may want to keep the lm_head in full precision"
+    return layer_paths + ["lm_head"]
