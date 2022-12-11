@@ -21,17 +21,6 @@ DeviceMap = dict[str, Union[str, int]]
 DEVICE_CPU: Final[str] = "cpu"
 
 
-class DeviceMapDistribution(Enum):
-    CPU = "CPU"
-    GPU = "GPU"
-    MAP = "MAP"
-
-
-class DeviceMapResult(TypedDict):
-    device_map: DeviceMap
-    distribution: DeviceMapDistribution
-
-
 DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
     ModelType.GPT_NEO: {
         "layer_key_template": "transformer.h.{layer}",

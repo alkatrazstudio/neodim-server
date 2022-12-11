@@ -2,7 +2,7 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 import bitsandbytes as bnb
-import torch.nn as nn
+from torch import nn
 from transformers.utils import bitsandbytes
 
 

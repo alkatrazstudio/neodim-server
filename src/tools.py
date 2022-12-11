@@ -6,8 +6,8 @@ from enum import Enum
 from typing import Optional, Union
 
 import torch
-from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, GPTNeoXPreTrainedModel
 from transformers import BloomPreTrainedModel, CodeGenPreTrainedModel, OPTPreTrainedModel, XGLMPreTrainedModel
+from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, GPTNeoXPreTrainedModel
 from transformers import PretrainedConfig, PreTrainedModel
 
 
