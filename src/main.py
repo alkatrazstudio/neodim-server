@@ -110,10 +110,12 @@ def load_model(
 
     layers_count = tools.num_layers(config)
     layers = parse_layers(layer_strs, layers_count)
-    layers_str = ",".join(str(layer) for layer in layers)
-    print(f"Total layers: {layers_count} (distribution: {layers_str})")
+    layers_str = ", ".join(f"GPU_{device_index}={layer}" for device_index, layer in enumerate(layers) if layer > 0)
     gpu_layers_count = sum(layers)
     cpu_layers_count = layers_count - gpu_layers_count
+    if cpu_layers_count > 0:
+        layers_str = layers_str + f", CPU={cpu_layers_count}"
+    print(f"Total layers: {layers_count} ({layers_str})")
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
