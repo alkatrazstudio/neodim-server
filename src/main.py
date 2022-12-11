@@ -36,7 +36,10 @@ def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer,
 
         t_elapsed = round(time.time() - t_start)
 
-        free_mems = [tools.format_gb(gpu.memory_free_end) for gpu in gen_out.gpus]
+        free_mems = [
+            f"GPU_{gpu_index}={tools.format_gb(gpu.memory_free_end)}"
+            for gpu_index, gpu in enumerate(gen_out.gpus)
+        ]
         free_mems_str = ", ".join(free_mems)
 
         print(f"Generated {gen_out.generated_tokens_count} tokens in {t_elapsed}s " +
