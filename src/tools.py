@@ -63,7 +63,6 @@ def normalize_str_list(strs: Optional[list[str]] = None) -> list[str]:
         strs = []
     if isinstance(strs, str):
         strs = [strs]
-    strs = sorted(strs, key=len, reverse=True)
     strs = [s for s in strs if s]
     return strs
 
