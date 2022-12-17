@@ -123,7 +123,7 @@ from the [`float16` branch](https://huggingface.co/EleutherAI/gpt-j-6B/tree/floa
 The server will also listen on all network interfaces (`--listen-address=0.0.0.0`)
 which allows any external client to connect to the server.
 
-If you have `curl` installed you can try to manually send a HTTP request:
+If you have `curl` installed you can try to manually send an HTTP request:
 ```sh
 curl -Ss --data '{
   "prompt": "I walk across the dead train yard, remembering who we are.",
@@ -135,7 +135,7 @@ curl -Ss --data '{
   "repetition_penalty": 3
 }' http://127.0.0.1:8787/generate | jq -r '.sequences[].generated_text'
 ```
-(`jq` is used here just to display the result in a human-readable form
+(`jq` is used here just to display the result in a human-readable form,
 but you can remove it to view the raw JSON response)
 
 
@@ -630,8 +630,9 @@ If multiple sequences are requested, the inference will stop when all sequences 
 (or the requested number of tokens are generated).
 All sequences will be truncated accordingly as well.
 
-You may want to use different strop strings for different scenarios.
-For example, if you want to generate no more than one sentence then set `stop_strings = [".", "!", "?"]`.
+You may want to use different stop strings for different scenarios.
+For example, if you want to generate no more than one sentence then you may set `stop_strings = [".", "!", "?"]`
+(see [stop_strings_type](#stop_strings_type-enumstringregex-optionaldefaultstring) for more complex example).
 If you want to stop at the end of the line (e.g. generating a reply in a chat) then use `["\n"]`.
 If you use AI as a story-writer for an interactive adventure
 where your actions start with a new paragraph and a `>` prompt,
@@ -665,7 +666,7 @@ However, if you specify `stop_strings_required_matches_count=2`
 the AI will be required to generate one more token.
 If it's not `bury`, then it means that there were `2` matches in a row
 and the inference needs to be stopped.
-But if the next token is `bury` then the inference continue
+But if the next token is `bury` then the inference continues
 and the "match counter" resets back to the value of `stop_strings_required_matches_count`.
 
 ### `truncate_prompt_until`: string[] (optional)
