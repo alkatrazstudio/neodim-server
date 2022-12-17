@@ -8,6 +8,7 @@ from typing import Final, Optional
 from transformers import LogitsProcessorList, LogitsWarper, PreTrainedModel
 from transformers import TemperatureLogitsWarper, TopKLogitsWarper, TopPLogitsWarper, TypicalLogitsWarper
 
+from rep_pen_warper import RepetitionPenaltyLogitsWarper
 from third_party.warpers import TailFreeLogitsWarper, TopALogitsWarper
 
 
@@ -18,16 +19,18 @@ class WarperId(Enum):
     TYPICAL = "typical"
     TFS = "tfs"
     TOP_A = "top_a"
+    REPETITION_PENALTY = "repetition_penalty"
     ALL = "*"
 
 
 DEFAULT_WARPER_TYPES: Final[dict[type(LogitsWarper), WarperId]] = {
-    TemperatureLogitsWarper: WarperId.TEMPERATURE,
-    TopKLogitsWarper:        WarperId.TOP_K,
-    TopPLogitsWarper:        WarperId.TOP_P,
-    TypicalLogitsWarper:     WarperId.TYPICAL,
-    TailFreeLogitsWarper:    WarperId.TFS,
-    TopALogitsWarper:        WarperId.TOP_A
+    RepetitionPenaltyLogitsWarper: WarperId.REPETITION_PENALTY,
+    TemperatureLogitsWarper:       WarperId.TEMPERATURE,
+    TopKLogitsWarper:              WarperId.TOP_K,
+    TopPLogitsWarper:              WarperId.TOP_P,
+    TypicalLogitsWarper:           WarperId.TYPICAL,
+    TailFreeLogitsWarper:          WarperId.TFS,
+    TopALogitsWarper:              WarperId.TOP_A
 }
 
 
@@ -51,6 +54,7 @@ def override_get_logits_warper(
     model: PreTrainedModel,
     tfs: Optional[float] = None,
     top_a: Optional[float] = None,
+    repetition_penalty_warper: Optional[RepetitionPenaltyLogitsWarper] = None,
     order: Optional[list[WarperId]] = None
 ) -> None:
     def new_get_logits_warper(self, *args, **kwargs) -> LogitsProcessorList:
@@ -61,6 +65,8 @@ def override_get_logits_warper(
         if top_a is not None:
             top_a_warper = TopALogitsWarper(top_a=top_a)
             warpers.append(top_a_warper)
+        if repetition_penalty_warper is not None:
+            warpers.insert(0, repetition_penalty_warper)
 
         final_order = [] if order is None else order
         try:

@@ -16,8 +16,9 @@ from dev_map import DeviceMap
 from gpu_info import GpuInfo, GpuMemStats
 from logits_warper_override import WarperId
 from memory_tracing_criteria import MemoryTracingCriteria
-from rep_pen_processor import AdvancedRepetitionPenaltyLogitsProcessor, RepPenGenerated
+from rep_pen_warper import RepetitionPenaltyLogitsWarper, RepPenGenerated
 from stop_tokens_criteria import StopStringsType, StopTokensCriteria
+from tokenizer import TokenizerResult
 
 
 @dataclass
@@ -176,6 +177,56 @@ def move_to_cpu(model: PreTrainedModel) -> PreTrainedModel:
     return model
 
 
+def create_repetition_penalty_warper(
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    request: RequestData,
+    tok_res: TokenizerResult,
+    input_tokens_len: int
+) -> Optional[RepetitionPenaltyLogitsWarper]:
+    r = request
+    if r.repetition_penalty is not None and r.repetition_penalty_range is not None:
+        repetition_penalty_range = r.repetition_penalty_range
+        if r.repetition_penalty_prompt:
+            rep_pen_custom_ids = tok.str_to_tokens(r.repetition_penalty_prompt, model, tokenizer)
+            rep_pen_custom_ids = [rep_pen_custom_ids] * r.sequences_count
+            rep_pen_custom_ids = torch.LongTensor(rep_pen_custom_ids)
+            if r.gpu_device is None:
+                rep_pen_custom_ids = rep_pen_custom_ids.to("cpu")
+            else:
+                rep_pen_custom_ids = rep_pen_custom_ids.to(r.gpu_device)
+
+            if not r.repetition_penalty_range:
+                if r.repetition_penalty_include_preamble:
+                    repetition_penalty_range = rep_pen_custom_ids.shape[-1] + tok_res.preamble_tokens_count
+                else:
+                    repetition_penalty_range = rep_pen_custom_ids.shape[-1]
+        else:
+            rep_pen_custom_ids = None
+
+            if not r.repetition_penalty_range:
+                if r.repetition_penalty_include_preamble:
+                    repetition_penalty_range = len(tok_res.input_tokens)
+                else:
+                    repetition_penalty_range = tok_res.trimmed_prompt_tokens_count
+
+        penalty_warper = RepetitionPenaltyLogitsWarper(
+            penalty=r.repetition_penalty,
+            input_len=input_tokens_len,
+            penalty_range=repetition_penalty_range,
+            penalty_slope=r.repetition_penalty_slope,
+            include_generated=r.repetition_penalty_include_generated,
+            preamble_tokens_count=tok_res.preamble_tokens_count,
+            include_preamble=r.repetition_penalty_include_preamble,
+            truncate_to_input=r.repetition_penalty_truncate_to_input,
+            prompt_tokens=rep_pen_custom_ids
+        )
+    else:
+        penalty_warper = None
+
+    return penalty_warper
+
+
 def generate(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
@@ -213,46 +264,13 @@ def generate(
         tracing_criteria = MemoryTracingCriteria(mem_stats_arrays)
         stop_list.append(tracing_criteria)
 
-        logit_processors = LogitsProcessorList()
-        if r.repetition_penalty is not None and r.repetition_penalty_range is not None:
-            repetition_penalty_range = r.repetition_penalty_range
-            if r.repetition_penalty_prompt:
-                rep_pen_custom_ids = tok.str_to_tokens(r.repetition_penalty_prompt, model, tokenizer)
-                rep_pen_custom_ids = [rep_pen_custom_ids] * r.sequences_count
-                rep_pen_custom_ids = torch.LongTensor(rep_pen_custom_ids)
-                if r.gpu_device is None:
-                    rep_pen_custom_ids = rep_pen_custom_ids.to("cpu")
-                else:
-                    rep_pen_custom_ids = rep_pen_custom_ids.to(r.gpu_device)
-
-                if not r.repetition_penalty_range:
-                    if r.repetition_penalty_include_preamble:
-                        repetition_penalty_range = rep_pen_custom_ids.shape[-1] + tok_res.preamble_tokens_count
-                    else:
-                        repetition_penalty_range = rep_pen_custom_ids.shape[-1]
-            else:
-                rep_pen_custom_ids = None
-
-                if not r.repetition_penalty_range:
-                    if r.repetition_penalty_include_preamble:
-                        repetition_penalty_range = len(tok_res.input_tokens)
-                    else:
-                        repetition_penalty_range = tok_res.trimmed_prompt_tokens_count
-
-            penalty_processor = AdvancedRepetitionPenaltyLogitsProcessor(
-                penalty=r.repetition_penalty,
-                input_len=input_tokens_len,
-                penalty_range=repetition_penalty_range,
-                penalty_slope=r.repetition_penalty_slope,
-                include_generated=r.repetition_penalty_include_generated,
-                preamble_tokens_count=tok_res.preamble_tokens_count,
-                include_preamble=r.repetition_penalty_include_preamble,
-                truncate_to_input=r.repetition_penalty_truncate_to_input,
-                prompt_tokens=rep_pen_custom_ids
-            )
-            logit_processors.append(penalty_processor)
-        else:
-            penalty_processor = None
+        penalty_warper = create_repetition_penalty_warper(
+            model=model,
+            tokenizer=tokenizer,
+            request=r,
+            tok_res=tok_res,
+            input_tokens_len=input_tokens_len
+        )
 
         in_tensor = torch.tensor(tok_res.input_tokens, dtype=torch.long)
         in_tensor = in_tensor[None]
@@ -265,7 +283,8 @@ def generate(
             model,
             tfs=r.tfs,
             top_a=r.top_a,
-            order=r.warpers_order
+            order=r.warpers_order,
+            repetition_penalty_warper=penalty_warper
         )
         try:
             out_tensor = model.generate(
@@ -282,7 +301,6 @@ def generate(
                 top_k=r.top_k,
                 typical_p=r.typical,
                 stopping_criteria=stop_list,
-                logits_processor=logit_processors,
                 return_dict_in_generate=False
             )
             lwo.restore_get_logits_warper(model)
@@ -292,27 +310,27 @@ def generate(
 
         out_tokens_len = out_tensor.shape[-1]
 
-        if penalty_processor is None or penalty_processor.first_tokens is None:
+        if penalty_warper is None or penalty_warper.first_tokens is None:
             repetition_penalty_text_at_start = ""
             used_repetition_penalty_range_at_start = 0
             used_repetition_penalty_tokens_count_at_start = 0
             used_repetition_penalty_range_at_end = 0
             used_repetition_penalty_tokens_count_at_end = 0
         else:
-            used_repetition_penalty_range_at_start = penalty_processor.first_tokens.shape[-1]
-            repetition_penalty_text_at_start = tok.tokens_to_str(penalty_processor.first_tokens[0], model, tokenizer)
-            used_repetition_penalty_tokens_count_at_start = penalty_processor.first_range
-            used_repetition_penalty_range_at_end = penalty_processor.last_tokens.shape[-1]
-            used_repetition_penalty_tokens_count_at_end = penalty_processor.last_range
+            used_repetition_penalty_range_at_start = penalty_warper.first_tokens.shape[-1]
+            repetition_penalty_text_at_start = tok.tokens_to_str(penalty_warper.first_tokens[0], model, tokenizer)
+            used_repetition_penalty_tokens_count_at_start = penalty_warper.first_range
+            used_repetition_penalty_range_at_end = penalty_warper.last_tokens.shape[-1]
+            used_repetition_penalty_tokens_count_at_end = penalty_warper.last_range
 
         input_text_len = len(r.preamble) + len(tok_res.trimmed_prompt)
 
         for seq_idx, out_tokens in enumerate(out_tensor):
-            if penalty_processor is None or penalty_processor.last_tokens is None:
+            if penalty_warper is None or penalty_warper.last_tokens is None:
                 repetition_penalty_text_at_end = ""
             else:
                 repetition_penalty_text_at_end = tok.tokens_to_str(
-                    penalty_processor.last_tokens[seq_idx], model, tokenizer)
+                    penalty_warper.last_tokens[seq_idx], model, tokenizer)
 
             out_txt = tok.tokens_to_str(out_tokens, model, tokenizer)
 

@@ -6,7 +6,7 @@ from typing import Optional
 
 import torch
 
-from third_party.warpers import AdvancedRepetitionPenaltyLogitsProcessor as _RepPenProcessor
+from third_party.warpers import AdvancedRepetitionPenaltyLogitsProcessor as _RepPenWarper
 
 
 # how to include the generated text in the penalty range
@@ -19,7 +19,7 @@ class RepPenGenerated(Enum):
 # warpers.py is "external" file,
 # so to make is easier to keep it in sync with upstream there should not be any modifications to it.
 # Instead, all modifications should happen outside, in child classes.
-class AdvancedRepetitionPenaltyLogitsProcessor(_RepPenProcessor):
+class RepetitionPenaltyLogitsWarper(_RepPenWarper):
     first_tokens: Optional[torch.LongTensor] = None
     last_tokens: Optional[torch.LongTensor] = None
     first_range: Optional[int] = None

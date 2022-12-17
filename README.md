@@ -535,7 +535,7 @@ By default, this filter is off.
 Sets the order in which all of the above filters/sampling methods (called "warpers") are applied.
 
 Can be an array containing the names of filters:
-`"temperature"`, `"top_k"`, `"top_p"`, `"typical"`, `"tfs"` or `"top_a"`.
+`"repetition_penalty"`, `"temperature"`, `"top_k"`, `"top_p"`, `"typical"`, `"tfs"` or `"top_a"`.
 By default, these warpers are applied in this order.
 However, the default order may change in future versions,
 so it's better not to rely on it.
