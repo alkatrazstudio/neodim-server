@@ -1,6 +1,27 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.8 (December 18, 2022)
+
+- Changed: using CUDA 11.7
+- Changed: `stop_strings` and `truncate_prompt_until` are not sorted anymore
+- Added: support for
+  [GPT-NeoX](https://huggingface.co/models?other=gpt_neox),
+  [CodeGen](https://huggingface.co/models?other=codegen) and
+  [BLOOM](https://huggingface.co/models?other=bloom) models
+- Added: ability to specify regular expressions as stop strings (see
+  [stop_strings_type](README.md#stop_strings_type-enumstringregex-optionaldefaultstring),
+  [stop_strings_required_matches_count](README.md#stop_strings_required_matches_count-int-optional-default1),
+  request parameters and
+  [stop_string_match](README.md#sequencesstop_string_match-string)
+  response parameter)
+- Improved: layers distribution is now supported for 8-bit precision
+  (i.e. `layers` can be set to any supported value when `precision=int8`)
+- Improved: more readable display of free VRAM and layers distribution
+- Improved: repetition penalty can now be specified in
+  [warpers_order](README.md#warpers_order-string-optional)
+
+
 ## v0.7 (September 18, 2022)
 
 - Added: ability to load the model in 32-bit and 8-bit precisions
