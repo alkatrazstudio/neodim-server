@@ -98,11 +98,19 @@ class StopTokensCriteria(StoppingCriteria):
                     ) if rx_match else None
                 else:
                     start_index = analyzed_text.find(stop_string)
-                    match = StopStringMatch(
-                        stop_string=stop_string,
-                        start_index=start_index,
-                        match=stop_string
-                    ) if start_index >= 0 else None
+                    if start_index >= 0:
+                        # now we actually need the full text to determine the match position
+                        if generated_tokens_count != 1 and analyzed_tokens_count != generated_tokens_count:
+                            analyzed_tokens = input_tokens[-generated_tokens_count:]
+                            analyzed_text = tok.tokens_to_str(analyzed_tokens, self.model, self.tokenizer)
+                            start_index = analyzed_text.find(stop_string)
+                        match = StopStringMatch(
+                            stop_string=stop_string,
+                            start_index=start_index,
+                            match=stop_string
+                        ) if start_index >= 0 else None
+                    else:
+                        match = None
                 if match:
                     self.matches_left[seq_index][str_index] = self.matches_left[seq_index][str_index] - 1
                     if self.matches_left[seq_index][str_index] <= 0:
