@@ -2,18 +2,28 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 import sys
+from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Callable, Final, Type
+from typing import Callable, Final, Optional, Type
 
 import jsons
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
 from ai import GeneratedOutput, RequestData
 
-Callback = Callable[[RequestData], GeneratedOutput]
+
+@dataclass
+class ServerRequestData(RequestData):
+    required_server_version: Optional[str] = None
+
+
+Callback = Callable[[ServerRequestData], GeneratedOutput]
+
 
 ENDPOINT_PATH: Final[str] = "/generate"
 SERVER_NAME: Final[str] = "Neodim Server"
-SERVER_VERSION: Final[str] = "0.8"
+SERVER_VERSION: Final[Version] = Version(f"0.8")
 
 
 def name_and_version():
@@ -27,9 +37,15 @@ def handler_with_callback(callback: Callback) -> Type[BaseHTTPRequestHandler]:
             json_str = self.rfile.read(content_len)
             in_data = jsons.loadb(
                 json_str,
-                RequestData,
+                ServerRequestData,
                 strict=True
             )
+
+            if in_data.required_server_version is not None:
+                specifier = SpecifierSet(in_data.required_server_version)
+                if SERVER_VERSION not in specifier:
+                    raise RuntimeError(
+                        f"Requested server version: {specifier}, current server version: {SERVER_VERSION})")
 
             out_data = callback(in_data)
             return out_data

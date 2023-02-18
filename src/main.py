@@ -15,14 +15,14 @@ import server
 import tools
 from ai import GeneratedOutput, ModelPrecision
 from bnb_override import override_bnb
-from server import Callback, RequestData
+from server import Callback, ServerRequestData
 
 
 AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
 def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: Optional[int]) -> Callback:
-    def request_callback(request: RequestData) -> GeneratedOutput:
+    def request_callback(request: ServerRequestData) -> GeneratedOutput:
         tools.cleanup()
 
         t_start = time.time()

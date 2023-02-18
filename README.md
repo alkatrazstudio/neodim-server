@@ -617,6 +617,20 @@ For example, you may want to pass a filtered `prompt` here
 (e.g. removing all punctuation and newlines - otherwise they will receive the penalty too),
 or you may want to pass some extra text that does not fit inside `max_total_tokens`.
 
+### `required_server_version`: string (optional)
+
+This will validate the server version before executing the request.
+This parameter must hold a valid version specifier, as described in the
+[PEP 440 – Version Identification and Dependency Specification](https://peps.python.org/pep-0440/#version-specifiers).
+If the server version does not match the specifier,
+then the request will fail immediately.
+
+**Examples of possible version specifiers:**
+
+* `==1.2` - will only match v1.2
+* `~=1.2` - will match v1.2 and all newer v1.*
+* `>=1, <4, !=1.2, !=2.*` - will match all v1.* except v1.2, and all v3.*
+
 ### `stop_strings`: string[] (optional)
 
 Stop the inference when any of these strings are encountered in generated text.
@@ -952,6 +966,7 @@ Other direct dependencies:
 * [bitsandbytes](https://pypi.org/project/bitsandbytes/)
 * [jsons](https://pypi.org/project/jsons/)
 * [regex](https://pypi.org/project/regex/)
+* [packaging](https://pypi.org/project/packaging/)
 
 
 ## License
