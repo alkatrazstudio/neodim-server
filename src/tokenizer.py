@@ -72,7 +72,7 @@ def tokens_to_str(
     if not len(tokens):
         return ""
 
-    text = tokenizer.decode(tokens)
+    text = tokenizer.decode(tokens, skip_special_tokens=True)
     if is_s_newline(model):
         if has_extra_nl_space(tokenizer):
             text = text.replace(S_NEWLINE + " ", "\n")
