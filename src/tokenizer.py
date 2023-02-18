@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
+import sys
 from typing import Final, Optional, Union
 
 import torch
@@ -56,7 +57,8 @@ def str_to_tokens(text: str, model: PreTrainedModel, tokenizer: PreTrainedTokeni
     if s_nl:
         text = text.replace("\n", S_NEWLINE)
 
-    tokens = tokenizer.encode(text)
+    # Using a fake max_length to silence the warning about "the specified maximum sequence length"
+    tokens = tokenizer.encode(text, max_length=sys.maxsize, truncation=True)
     if s_nl and (has_extra_nl_space(tokenizer) or has_extra_nl(tokenizer)) and len(tokens):
         tokens = tokens[1:]
     return tokens
