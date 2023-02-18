@@ -6,8 +6,7 @@ from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, LogitsProcessorList, \
-    PretrainedConfig
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, PretrainedConfig
 from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteriaList
 
 import logits_warper_override as lwo
