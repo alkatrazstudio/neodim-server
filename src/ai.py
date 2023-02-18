@@ -6,7 +6,8 @@ from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, PretrainedConfig
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, LogitsProcessorList, \
+    PretrainedConfig
 from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteriaList
 
 import logits_warper_override as lwo
@@ -154,22 +155,30 @@ def load_model(
 
     tokenizer = AutoTokenizer.from_pretrained(path)
 
+    return model, tokenizer
+
+
+def default_generation_config_by_model(model: PreTrainedModel) -> GenerationConfig:
     # These defaults are used when you pass None to a corresponding parameter in model.generate().
     # Set them all to None, so that passing None to generate() will actually mean None.
-    model.config.temperature = None
-    model.config.top_k = None
-    model.config.top_p = None
-    model.config.typical_p = None
-    model.config.repetition_penalty = None
-    model.config.diversity_penalty = None
-    model.config.no_repeat_ngram_size = None
-    model.config.encoder_no_repeat_ngram_size = None
+    config = GenerationConfig(
+        temperature=None,
+        top_k=None,
+        top_p=None,
+        typical_p=None,
+        repetition_penalty=None,
+        diversity_penalty=None,
+        no_repeat_ngram_size=None,
+        encoder_no_repeat_ngram_size=None
+    )
 
     # silence the Transformers warning "Setting `pad_token_id` to `eos_token_id`"
     if model.config.pad_token_id is None and model.config.eos_token_id is not None:
-        model.config.pad_token_id = model.config.eos_token_id
+        config.update(
+            pad_token_id=model.config.eos_token_id
+        )
 
-    return model, tokenizer
+    return config
 
 
 def move_to_cpu(model: PreTrainedModel) -> PreTrainedModel:
@@ -287,8 +296,12 @@ def generate(
             repetition_penalty_warper=penalty_warper
         )
         try:
+            generation_config = default_generation_config_by_model(model)
+
             out_tensor = model.generate(
                 in_tensor,
+                generation_config=generation_config,
+
                 do_sample=True,
                 min_length=input_tokens_len + r.generated_tokens_count,
                 max_length=input_tokens_len + r.generated_tokens_count,
