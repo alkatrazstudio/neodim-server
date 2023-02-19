@@ -358,6 +358,9 @@ The preamble is never truncated.
 
 Either preamble or prompt can be empty, but not both at the same time.
 
+Both preamble and prompt may be modified before they are passed to the language model.
+It can happen if they contain special tokens that are handled differently by the model.
+
 
 ### Recommendations
 

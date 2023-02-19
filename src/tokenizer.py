@@ -108,6 +108,23 @@ def tokens_to_str(
     return text
 
 
+def normalize_str(text: str, tokenizer: PreTrainedTokenizer) -> tuple[str, list[int]]:
+    special_tokens = tokenizer.all_special_tokens
+
+    while True:
+        new_text = text
+        for token in special_tokens:
+            new_text = new_text.replace(token, "")
+        is_same = new_text == text
+        text = new_text
+        if is_same:
+            break
+
+    tokens = str_to_tokens(text, tokenizer)
+    normalized_text = tokens_to_str(tokens, tokenizer)
+    return normalized_text, tokens
+
+
 def tokenize_input(
     prompt: str,
     preamble: str,
@@ -118,11 +135,12 @@ def tokenize_input(
     truncate_untils = tools.normalize_str_list(truncate_untils)
     err = RuntimeError(f"Cannot fit the prompt in {max_tokens_len} tokens while using specified stop_strings")
 
+    preamble, preamble_tokens = normalize_str(preamble, tokenizer)
+    prompt, prompt_tokens = normalize_str(prompt, tokenizer)
+
     res = TokenizerResult()
-    preamble_tokens = str_to_tokens(preamble, tokenizer)
     res.preamble_tokens_count = len(preamble_tokens)
     res.trimmed_prompt = prompt
-    prompt_tokens = str_to_tokens(prompt, tokenizer)
     res.original_prompt_tokens_count = len(prompt_tokens)
     res.trimmed_prompt_tokens_count = res.original_prompt_tokens_count
     res.input_tokens = preamble_tokens + prompt_tokens
