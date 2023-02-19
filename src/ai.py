@@ -86,6 +86,7 @@ class GeneratedOutput:
     original_input_tokens_count: int
     used_input_tokens_count: int
     preamble_tokens_count: int
+    preamble: str
     used_prompt: str
     original_prompt_tokens_count: int
     used_prompt_tokens_count: int
@@ -393,6 +394,7 @@ def generate(
         original_input_tokens_count=tok_res.original_input_tokens_count,
         used_input_tokens_count=input_tokens_len,
         preamble_tokens_count=tok_res.preamble_tokens_count,
+        preamble=tok_res.preamble,
         used_prompt=tok_res.trimmed_prompt,
         original_prompt_tokens_count=tok_res.original_prompt_tokens_count,
         used_prompt_tokens_count=tok_res.trimmed_prompt_tokens_count,

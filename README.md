@@ -360,6 +360,9 @@ Either preamble or prompt can be empty, but not both at the same time.
 
 Both preamble and prompt may be modified before they are passed to the language model.
 It can happen if they contain special tokens that are handled differently by the model.
+See the response parameters
+[used_prompt](#used_prompt-string) and [preamble](#preamble-string)
+to see what was actually passed to the model.
 
 
 ### Recommendations
@@ -730,6 +733,7 @@ If the request is completed successfully then the result will be an object with 
   "original_input_tokens_count": 60,
   "used_input_tokens_count": 40,
   "preamble_tokens_count": 5,
+  "preamble": "The Butcher of Ark\n\n",
   "used_prompt": "almost seemed as if that day Mother Nature, as a response to the festivities of the preceding night, had decided to recover herself with a dreamy, nondescript day.",
   "original_prompt_tokens_count": 55,
   "used_prompt_tokens_count": 35,
@@ -786,6 +790,11 @@ Number of tokens that was in the `preamble` + `prompt`.
 ### `used_input_tokens_count`: int
 
 Number of tokens that were actually passed to the language model.
+
+### `preamble`: string
+
+The preamble that was used by the language model.
+Due to some preprocessing it may differ from what was passed in the request.
 
 ### `preamble_tokens_count`: int
 

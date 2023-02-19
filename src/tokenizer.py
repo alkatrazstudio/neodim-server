@@ -17,6 +17,7 @@ class TokenizerResult:
     preamble_tokens_count: int
     original_prompt_tokens_count: int
     original_input_tokens_count: int
+    preamble: str
     trimmed_prompt: str
     trimmed_prompt_tokens_count: int
     input_tokens: list[int]
@@ -140,6 +141,7 @@ def tokenize_input(
 
     res = TokenizerResult()
     res.preamble_tokens_count = len(preamble_tokens)
+    res.preamble = preamble
     res.trimmed_prompt = prompt
     res.original_prompt_tokens_count = len(prompt_tokens)
     res.trimmed_prompt_tokens_count = res.original_prompt_tokens_count
