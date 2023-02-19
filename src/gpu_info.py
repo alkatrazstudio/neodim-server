@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
+
 from dataclasses import dataclass
 
 import torch
