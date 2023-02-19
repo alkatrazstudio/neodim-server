@@ -73,6 +73,7 @@ class RequestData:
 
 @dataclass
 class GeneratedSequence:
+    output_text: str
     generated_text: str
     stop_string: str
     stop_string_match: str
@@ -358,6 +359,7 @@ def generate(
                 trimmed_tail = ""
 
             seq = GeneratedSequence(
+                output_text=out_txt,
                 generated_text=gen_txt_trimmed,
                 stop_string=stop_string,
                 stop_string_match=stop_string_match,
@@ -375,6 +377,7 @@ def generate(
 
         for _ in range(r.sequences_count):
             seq = GeneratedSequence(
+                output_text="",
                 generated_text="",
                 stop_string="",
                 stop_string_match="",
