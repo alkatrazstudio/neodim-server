@@ -1,6 +1,20 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.9 (February 19, 2023)
+
+- Fixed: wrong truncation of the inference result
+- Changed: special tokens (e.g. `<|endoftext|>` or `</s>`) are now always removed
+  from the input and the output
+- Added: server version validation
+  ([required_server_version](README.md#required_server_version-string-optional) request parameter)
+- Added: full output from the model is returned in the
+  [output_text](README.md#sequencesoutput_text-string) response field
+- Added: actually used preamble is returned in the
+  [asd](README.md#preamble-string) response field
+- Improved: silenced messages: "the specified maximum sequence length" and "Welcome to bitsandbytes"
+
+
 ## v0.8 (December 18, 2022)
 
 - Changed: using CUDA 11.7
