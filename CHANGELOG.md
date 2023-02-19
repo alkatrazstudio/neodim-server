@@ -11,7 +11,7 @@
 - Added: full output from the model is returned in the
   [output_text](README.md#sequencesoutput_text-string) response field
 - Added: actually used preamble is returned in the
-  [asd](README.md#preamble-string) response field
+  [preamble](README.md#preamble-string) response field
 - Improved: silenced messages: "the specified maximum sequence length" and "Welcome to bitsandbytes"
 
 
