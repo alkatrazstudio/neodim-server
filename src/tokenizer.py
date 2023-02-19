@@ -5,10 +5,9 @@ import sys
 from typing import Final, Optional, Union
 
 import torch
-from transformers import PreTrainedModel, PreTrainedTokenizer
+from transformers import PreTrainedTokenizer
 
 import tools
-from tools import ModelType
 
 
 S_NEWLINE: Final[str] = "</s>"
@@ -23,8 +22,13 @@ class TokenizerResult:
     input_tokens: list[int]
 
 
-def is_s_newline(model: PreTrainedModel) -> bool:
-    return tools.model_type(model) in [ModelType.XGLM, ModelType.OPT]
+def is_s_newline(tokenizer: PreTrainedTokenizer) -> bool:
+    if hasattr(tokenizer, "__is_s_newline"):
+        return tokenizer.__is_s_newline
+
+    result = tokenizer.decode(tokenizer.encode("\n"))
+    tokenizer.__is_s_newline = S_NEWLINE in result
+    return tokenizer.__is_s_newline
 
 
 def has_extra_nl_space(tokenizer: PreTrainedTokenizer) -> bool:
@@ -49,11 +53,11 @@ def has_extra_nl(tokenizer: PreTrainedTokenizer) -> bool:
     return tokenizer.__has_extra_nl
 
 
-def str_to_tokens(text: str, model: PreTrainedModel, tokenizer: PreTrainedTokenizer) -> list[int]:
+def str_to_tokens(text: str, tokenizer: PreTrainedTokenizer) -> list[int]:
     if not text:
         return []
 
-    s_nl = is_s_newline(model)
+    s_nl = is_s_newline(tokenizer)
     if s_nl:
         text = text.replace("\n", S_NEWLINE)
 
@@ -66,14 +70,13 @@ def str_to_tokens(text: str, model: PreTrainedModel, tokenizer: PreTrainedTokeni
 
 def tokens_to_str(
     tokens: Union[list[int], torch.Tensor],
-    model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer
 ) -> str:
     if not len(tokens):
         return ""
 
     text = tokenizer.decode(tokens, skip_special_tokens=True)
-    if is_s_newline(model):
+    if is_s_newline(tokenizer):
         if has_extra_nl_space(tokenizer):
             text = text.replace(S_NEWLINE + " ", "\n")
         text = text.replace(S_NEWLINE, "\n")
@@ -84,7 +87,6 @@ def tokenize_input(
     prompt: str,
     preamble: str,
     truncate_untils: Optional[list[str]],
-    model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
     max_tokens_len: int
 ) -> TokenizerResult:
@@ -92,10 +94,10 @@ def tokenize_input(
     err = RuntimeError(f"Cannot fit the prompt in {max_tokens_len} tokens while using specified stop_strings")
 
     res = TokenizerResult()
-    preamble_tokens = str_to_tokens(preamble, model, tokenizer)
+    preamble_tokens = str_to_tokens(preamble, tokenizer)
     res.preamble_tokens_count = len(preamble_tokens)
     res.trimmed_prompt = prompt
-    prompt_tokens = str_to_tokens(prompt, model, tokenizer)
+    prompt_tokens = str_to_tokens(prompt, tokenizer)
     res.original_prompt_tokens_count = len(prompt_tokens)
     res.trimmed_prompt_tokens_count = res.original_prompt_tokens_count
     res.input_tokens = preamble_tokens + prompt_tokens
@@ -114,7 +116,7 @@ def tokenize_input(
         return res
 
     trimmed_prompt_tokens = prompt_tokens[-max_allowed_prompt_tokens:]
-    res.trimmed_prompt = tokens_to_str(trimmed_prompt_tokens, model, tokenizer)
+    res.trimmed_prompt = tokens_to_str(trimmed_prompt_tokens, tokenizer)
     res.trimmed_prompt_tokens_count = len(trimmed_prompt_tokens)
 
     if not truncate_untils:
@@ -147,7 +149,7 @@ def tokenize_input(
         # we eliminated the whole prompt, but there's no preamble either
         raise err
 
-    trimmed_prompt_tokens = str_to_tokens(res.trimmed_prompt, model, tokenizer)
+    trimmed_prompt_tokens = str_to_tokens(res.trimmed_prompt, tokenizer)
     res.trimmed_prompt_tokens_count = len(trimmed_prompt_tokens)
     res.input_tokens = preamble_tokens + trimmed_prompt_tokens
     return res

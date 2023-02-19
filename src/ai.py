@@ -186,7 +186,6 @@ def move_to_cpu(model: PreTrainedModel) -> PreTrainedModel:
 
 
 def create_repetition_penalty_warper(
-    model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
     request: RequestData,
     tok_res: TokenizerResult,
@@ -196,7 +195,7 @@ def create_repetition_penalty_warper(
     if r.repetition_penalty is not None and r.repetition_penalty_range is not None:
         repetition_penalty_range = r.repetition_penalty_range
         if r.repetition_penalty_prompt:
-            rep_pen_custom_ids = tok.str_to_tokens(r.repetition_penalty_prompt, model, tokenizer)
+            rep_pen_custom_ids = tok.str_to_tokens(r.repetition_penalty_prompt, tokenizer)
             rep_pen_custom_ids = [rep_pen_custom_ids] * r.sequences_count
             rep_pen_custom_ids = torch.LongTensor(rep_pen_custom_ids)
             if r.gpu_device is None:
@@ -249,7 +248,7 @@ def generate(
     mem_stats_arrays = [GpuMemStats.from_all_devices()]
 
     max_tokens_for_gen = r.max_total_tokens - r.generated_tokens_count
-    tok_res = tok.tokenize_input(r.prompt, r.preamble, r.truncate_prompt_until, model, tokenizer, max_tokens_for_gen)
+    tok_res = tok.tokenize_input(r.prompt, r.preamble, r.truncate_prompt_until, tokenizer, max_tokens_for_gen)
     input_tokens_len = len(tok_res.input_tokens)
     sequences = []
 
@@ -262,7 +261,6 @@ def generate(
                 stop_strings=stop_strings,
                 stop_strings_type=r.stop_strings_type,
                 required_matches_count=r.stop_strings_required_matches_count,
-                model=model,
                 tokenizer=tokenizer,
                 sequences_count=r.sequences_count
             )
@@ -273,7 +271,6 @@ def generate(
         stop_list.append(tracing_criteria)
 
         penalty_warper = create_repetition_penalty_warper(
-            model=model,
             tokenizer=tokenizer,
             request=r,
             tok_res=tok_res,
@@ -330,7 +327,7 @@ def generate(
             used_repetition_penalty_tokens_count_at_end = 0
         else:
             used_repetition_penalty_range_at_start = penalty_warper.first_tokens.shape[-1]
-            repetition_penalty_text_at_start = tok.tokens_to_str(penalty_warper.first_tokens[0], model, tokenizer)
+            repetition_penalty_text_at_start = tok.tokens_to_str(penalty_warper.first_tokens[0], tokenizer)
             used_repetition_penalty_tokens_count_at_start = penalty_warper.first_range
             used_repetition_penalty_range_at_end = penalty_warper.last_tokens.shape[-1]
             used_repetition_penalty_tokens_count_at_end = penalty_warper.last_range
@@ -342,9 +339,9 @@ def generate(
                 repetition_penalty_text_at_end = ""
             else:
                 repetition_penalty_text_at_end = tok.tokens_to_str(
-                    penalty_warper.last_tokens[seq_idx], model, tokenizer)
+                    penalty_warper.last_tokens[seq_idx], tokenizer)
 
-            out_txt = tok.tokens_to_str(out_tokens, model, tokenizer)
+            out_txt = tok.tokens_to_str(out_tokens, tokenizer)
 
             gen_txt = out_txt[input_text_len:]
 

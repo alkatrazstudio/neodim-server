@@ -7,7 +7,7 @@ from typing import Optional
 
 import torch
 from regex import regex
-from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteria
+from transformers import PreTrainedTokenizer, StoppingCriteria
 
 import tokenizer as tok
 
@@ -33,7 +33,6 @@ class StopTokensCriteria(StoppingCriteria):
         stop_strings: list[str],
         stop_strings_type: StopStringsType,
         required_matches_count: int,
-        model: PreTrainedModel,
         tokenizer: PreTrainedTokenizer,
         sequences_count: int,
         *args,
@@ -48,7 +47,6 @@ class StopTokensCriteria(StoppingCriteria):
 
         self.stop_strings_type = stop_strings_type
         self.tokenizer = tokenizer
-        self.model = model
 
         self.matches = [None for _ in range(sequences_count)]
         self.required_matches_count = required_matches_count
@@ -82,10 +80,10 @@ class StopTokensCriteria(StoppingCriteria):
                 # (extra token to include possible concatenation symbols)
                 analyzed_tokens_count = min(self.max_stop_string_len, generated_tokens_count) + 1
             analyzed_tokens = input_tokens[-analyzed_tokens_count:]
-            analyzed_text = tok.tokens_to_str(analyzed_tokens, self.model, self.tokenizer)
+            analyzed_text = tok.tokens_to_str(analyzed_tokens, self.tokenizer)
             if generated_tokens_count == 1 and self.max_stop_string_len is not None:
                 # special case: exclude the end of the input text
-                prev_token_str = tok.tokens_to_str(analyzed_tokens[0:1], self.model, self.tokenizer)
+                prev_token_str = tok.tokens_to_str(analyzed_tokens[0:1], self.tokenizer)
                 analyzed_text = analyzed_text[len(prev_token_str):]
 
             for str_index, stop_string in enumerate(self.stop_strings):
@@ -102,7 +100,7 @@ class StopTokensCriteria(StoppingCriteria):
                         # now we actually need the full text to determine the match position
                         if generated_tokens_count != 1 and analyzed_tokens_count != generated_tokens_count:
                             analyzed_tokens = input_tokens[-generated_tokens_count:]
-                            analyzed_text = tok.tokens_to_str(analyzed_tokens, self.model, self.tokenizer)
+                            analyzed_text = tok.tokens_to_str(analyzed_tokens, self.tokenizer)
                             start_index = analyzed_text.find(stop_string)
                         match = StopStringMatch(
                             stop_string=stop_string,
