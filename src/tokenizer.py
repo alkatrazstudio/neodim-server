@@ -53,6 +53,21 @@ def has_extra_nl(tokenizer: PreTrainedTokenizer) -> bool:
     return tokenizer.__has_extra_nl
 
 
+def get_ignored_tokens(tokenizer: PreTrainedTokenizer) -> torch.Tensor:
+    if hasattr(tokenizer, "__ignored_tokens"):
+        return tokenizer.__ignored_tokens
+
+    special_ids = tokenizer.all_special_ids
+    if is_s_newline(tokenizer):
+        vocab = tokenizer.get_vocab()
+        if S_NEWLINE in vocab:
+            s_id = vocab[S_NEWLINE]
+            special_ids = list(set(special_ids) - {s_id})
+
+    tokenizer.__ignored_tokens = torch.tensor(special_ids, dtype=torch.int64)
+    return tokenizer.__ignored_tokens
+
+
 def str_to_tokens(text: str, tokenizer: PreTrainedTokenizer) -> list[int]:
     if not text:
         return []
@@ -72,10 +87,20 @@ def tokens_to_str(
     tokens: Union[list[int], torch.Tensor],
     tokenizer: PreTrainedTokenizer
 ) -> str:
+    # Ignore special tokens to avoid adding things like <|endoftext|> to the output.
+    # Can't use skip_special_tokens=True because some special tokens (e.g. </s>) must not be skipped.
+    ignored_tokens = get_ignored_tokens(tokenizer)
+    if isinstance(tokens, torch.Tensor):
+        ignored_tokens = ignored_tokens.to(tokens.device)
+        tokens = tokens[torch.logical_not(torch.isin(tokens, ignored_tokens))]
+    else:
+        ignored_tokens = ignored_tokens.tolist()
+        tokens = [token for token in tokens if token not in ignored_tokens]
+
     if not len(tokens):
         return ""
 
-    text = tokenizer.decode(tokens, skip_special_tokens=True)
+    text = tokenizer.decode(tokens)
     if is_s_newline(tokenizer):
         if has_extra_nl_space(tokenizer):
             text = text.replace(S_NEWLINE + " ", "\n")
