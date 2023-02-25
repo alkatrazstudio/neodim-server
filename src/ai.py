@@ -41,7 +41,7 @@ class RequestData:
     repetition_penalty_prompt: Optional[str] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-    top_k: Optional[float] = None
+    top_k: Optional[int] = None
     tfs: Optional[float] = None
     typical: Optional[float] = None
     top_a: Optional[float] = None
