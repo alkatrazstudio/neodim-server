@@ -481,7 +481,8 @@ For example, if `top_k = 2` the algorithm will only choose between two top resul
 
 By default, this filter is off.
 It's not really recommended using this filter alone by itself.
-However, it can be used in combination with other filters.
+However, it can be used in combination with other filters,
+and it's required when using [penalty_alpha](#penalty_alpha-float-optional).
 The value of `40` is considered to be adequate.
 
 ### `top_p`: float (optional)
@@ -535,6 +536,31 @@ Allowed range: `0 < x <= 1`.
 Recommended values: `0.8 - 0.95`.
 
 By default, this filter is off.
+
+### `penalty_alpha`: float (optional)
+
+If not zero, enables [contrastive search](https://huggingface.co/blog/introducing-csearch).
+
+This works somewhat similar to the repetition penalty.
+Bigger values will make the generated text more random and less repetitive,
+but after some threshold it becomes more and more incoherent.
+For more details read the link above.
+
+This parameter will switch the inference to a completely different mode,
+so there are some caveats:
+
+* Since the contrastive search only applies to `top_k` results,
+  `top_k` parameter is mandatory, and should be greater than 1.
+* All other warpers (`top_p`, `tfs`, `typical`, `top_a`, `temperature` and the repetition penalty)
+  may work differently, so you may need to adjust or disable them.
+* The memory consumption depends linearly on `top_k`.
+* The output is deterministic, i.e. you will get the same output each time
+  for the same input parameters and prompt/preamble.
+
+Allowed range: `0 < x <= 1`.
+Recommended values: `penalty_alpha=0.6`, `top_k=4` (taken from the example in the link above).
+
+By default, this parameter is zero and therefore the contrastive search is disabled.
 
 ### `warpers_order`: string[] (optional)
 

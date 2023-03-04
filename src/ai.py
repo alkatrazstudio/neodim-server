@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
+import copy
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, PretrainedConfig
-from transformers import PreTrainedModel, PreTrainedTokenizer, StoppingCriteriaList
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import GenerationConfig, LogitsProcessorList, StoppingCriteriaList
+from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer
 
 import logits_warper_override as lwo
 import tokenizer as tok
@@ -45,6 +47,7 @@ class RequestData:
     tfs: Optional[float] = None
     typical: Optional[float] = None
     top_a: Optional[float] = None
+    penalty_alpha: Optional[float] = None
     warpers_order: Optional[list[WarperId]] = None
     sequences_count: int = 1
 
@@ -59,6 +62,8 @@ class RequestData:
             self.typical = None
         if self.top_a == 0:
             self.top_a = None
+        if self.penalty_alpha == 0:
+            self.penalty_alpha = None
         if self.temperature == 0:
             self.temperature = None
         if self.repetition_penalty == 0:
@@ -296,23 +301,42 @@ def generate(
         try:
             generation_config = default_generation_config_by_model(model)
 
+            do_sample = r.penalty_alpha is None
+
+            warpers_params = {
+                "temperature": r.temperature,
+                "top_p": r.top_p,
+                "top_k": r.top_k,
+                "typical_p": r.typical,
+            }
+
+            if do_sample:
+                logits_processor = LogitsProcessorList()
+            else:
+                # Penalty Alpha disables all warpers, so we need to move all of them to the processors,
+                # so they can be passed to the generate().
+                # The only way to get the warpers beforehand is via the "protected" method _get_logits_warper().
+                cfg = copy.deepcopy(generation_config)
+                cfg.update(**warpers_params)
+                logits_processor = model._get_logits_warper(generation_config=cfg)
+
             out_tensor = model.generate(
                 in_tensor,
                 generation_config=generation_config,
 
-                do_sample=True,
+                do_sample=do_sample,
                 min_length=input_tokens_len + r.generated_tokens_count,
                 max_length=input_tokens_len + r.generated_tokens_count,
                 use_cache=True,  # insanely slow without the cache (but uses much less VRAM)
                 num_return_sequences=r.sequences_count,
                 num_beams=1,
                 num_beam_groups=1,
-                temperature=r.temperature,
-                top_p=r.top_p,
-                top_k=r.top_k,
-                typical_p=r.typical,
+                penalty_alpha=r.penalty_alpha,
+                logits_processor=logits_processor,
                 stopping_criteria=stop_list,
-                return_dict_in_generate=False
+                return_dict_in_generate=False,
+
+                **warpers_params
             )
             lwo.restore_get_logits_warper(model)
         except Exception as e:
