@@ -1,6 +1,13 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.10 (March 4, 2023)
+
+- Fixed: specifying `top_k` gives a type error
+- Added: contrastive search
+  (see [penalty_alpha](README.md#penalty_alpha-float-optional) parameter)
+
+
 ## v0.9 (February 19, 2023)
 
 - Fixed: wrong truncation of the inference result
