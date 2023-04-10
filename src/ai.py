@@ -320,6 +320,11 @@ def generate(
                 cfg.update(**warpers_params)
                 logits_processor = model._get_logits_warper(generation_config=cfg)
 
+            if model.config.eos_token_id is not None:
+                begin_suppress_tokens = [model.config.eos_token_id]
+            else:
+                begin_suppress_tokens = None
+
             out_tensor = model.generate(
                 in_tensor,
                 generation_config=generation_config,
@@ -335,6 +340,7 @@ def generate(
                 logits_processor=logits_processor,
                 stopping_criteria=stop_list,
                 return_dict_in_generate=False,
+                begin_suppress_tokens=begin_suppress_tokens,
 
                 **warpers_params
             )
