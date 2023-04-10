@@ -738,6 +738,27 @@ e.g. it may leave half of the word in the beginning, like this:
 
 If the `prompt` does not need to be truncated then `truncate_prompt_until` is ignored.
 
+### `words_whitelist`: string[] (optional)
+
+If not `null`, the output sequence will only contain these specified words.
+
+**Example:** `["feed", "seed"]`
+
+**Notes:**
+
+* "Words" don't have to be actual words.
+  You can put an entire sentence as a string.
+  For example: `["cookies and cream !"]`.
+  However, see the next note.
+
+* Currently, this whitelist will also allow any permutations of tokens that define the specified words.
+  For example, if `words_whitelist = ["privacy", "intimidate"]`
+  and the tokens that form these words are `"priv", "acy", "intim", "id", "ate"`,
+  then the server may generate something like `"private intimacy"`.
+
+* Empty list means a whitelist with zero words, i.e. all words are banned.
+  To disable the whitelist pass `null` or don't pass anything.
+
 
 ## API response
 

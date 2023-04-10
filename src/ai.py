@@ -50,6 +50,7 @@ class RequestData:
     penalty_alpha: Optional[float] = None
     warpers_order: Optional[list[WarperId]] = None
     sequences_count: int = 1
+    words_whitelist: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.top_p == 0:
@@ -320,6 +321,11 @@ def generate(
                 cfg.update(**warpers_params)
                 logits_processor = model._get_logits_warper(generation_config=cfg)
 
+            if r.words_whitelist is not None:
+                bad_words_ids = tok.bad_words_by_whitelist(r.words_whitelist, tokenizer)
+            else:
+                bad_words_ids = None
+
             if model.config.eos_token_id is not None:
                 begin_suppress_tokens = [model.config.eos_token_id]
             else:
@@ -340,6 +346,7 @@ def generate(
                 logits_processor=logits_processor,
                 stopping_criteria=stop_list,
                 return_dict_in_generate=False,
+                bad_words_ids=bad_words_ids,
                 begin_suppress_tokens=begin_suppress_tokens,
 
                 **warpers_params

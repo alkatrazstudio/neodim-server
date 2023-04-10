@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
+import itertools
 import sys
 from typing import Final, Optional, Union
 
@@ -198,3 +199,23 @@ def tokenize_input(
     res.trimmed_prompt_tokens_count = len(trimmed_prompt_tokens)
     res.input_tokens = preamble_tokens + trimmed_prompt_tokens
     return res
+
+
+def add_space_prefix(words: list[str]) -> list[str]:
+    result_words = []
+    for word in words:
+        result_words.append(word)
+        if word.startswith(" "):
+            word = word[1:]
+        else:
+            word = " " + word
+        result_words.append(word)
+    return result_words
+
+
+def bad_words_by_whitelist(whitelist_words: list[str], tokenizer: PreTrainedTokenizer) -> list[list[int]]:
+    words = add_space_prefix(whitelist_words)
+    whitelist_words_ids = [str_to_tokens(word, tokenizer) for word in words]
+    whitelist_ids = list(itertools.chain.from_iterable(whitelist_words_ids))
+    bad_ids = [[token_id] for token_id in tokenizer.get_vocab().values() if token_id not in whitelist_ids]
+    return bad_ids
