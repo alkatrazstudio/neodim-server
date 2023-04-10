@@ -45,7 +45,7 @@ def handler_with_callback(callback: Callback) -> Type[BaseHTTPRequestHandler]:
                 specifier = SpecifierSet(in_data.required_server_version)
                 if SERVER_VERSION not in specifier:
                     raise RuntimeError(
-                        f"Requested server version: {specifier}, current server version: {SERVER_VERSION})")
+                        f"Requested server version: {specifier}, current server version: {SERVER_VERSION}")
 
             out_data = callback(in_data)
             return out_data
