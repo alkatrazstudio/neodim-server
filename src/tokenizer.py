@@ -219,3 +219,9 @@ def bad_words_by_whitelist(whitelist_words: list[str], tokenizer: PreTrainedToke
     whitelist_ids = list(itertools.chain.from_iterable(whitelist_words_ids))
     bad_ids = [[token_id] for token_id in tokenizer.get_vocab().values() if token_id not in whitelist_ids]
     return bad_ids
+
+
+def bad_words_by_blacklist(blacklist_words: list[str], tokenizer: PreTrainedTokenizer) -> list[list[int]]:
+    words = add_space_prefix(blacklist_words)
+    bad_ids = [str_to_tokens(word, tokenizer) for word in words]
+    return bad_ids

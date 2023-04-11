@@ -759,6 +759,32 @@ If not `null`, the output sequence will only contain these specified words.
 * Empty list means a whitelist with zero words, i.e. all words are banned.
   To disable the whitelist pass `null` or don't pass anything.
 
+### `words_blacklist`: string[] (optional)
+
+The output sequence will not contain the specified words or word sequences.
+
+**Example:** `["word", "Many words?"]`
+
+**Notes:**
+
+* Only the whole sequence will be banned.
+  For example, if `words_blacklist = ["Hello world"]`,
+  the server will still able to generate separate words "Hello" and "world",
+  but not the exact phrase "Hello world".
+  Because of that, this blacklist is not mutually exclusive with the
+  [whitelist](#words_whitelist-string-optional).
+
+* The word sequences are banned using tokens.
+  It means that only the exact token sequence is banned.
+  But if the word sequence can be represented by a different set of tokens,
+  it may still appear in the output.
+  For example, if `words_blacklist = ["Mathematical"]`
+  then the following sequence of tokens may be banned `"Mathe", "matical"`.
+  However, if there are tokens `"Math", "ematic", "al"` then this word can still appear in the output
+
+* As a consequence of the previous gotcha, the blacklist is case-sensitive.
+  For example, if you ban the word "go", then the word "GO" may still appear as it considered a different word.
+
 
 ## API response
 

@@ -51,6 +51,7 @@ class RequestData:
     warpers_order: Optional[list[WarperId]] = None
     sequences_count: int = 1
     words_whitelist: Optional[list[str]] = None
+    words_blacklist: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.top_p == 0:
@@ -325,6 +326,12 @@ def generate(
                 bad_words_ids = tok.bad_words_by_whitelist(r.words_whitelist, tokenizer)
             else:
                 bad_words_ids = None
+
+            if r.words_blacklist:
+                blacklisted_word_ids = tok.bad_words_by_blacklist(r.words_blacklist, tokenizer)
+                if bad_words_ids is None:
+                    bad_words_ids = []
+                bad_words_ids += blacklisted_word_ids
 
             if model.config.eos_token_id is not None:
                 begin_suppress_tokens = [model.config.eos_token_id]
