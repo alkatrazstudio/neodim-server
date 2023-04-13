@@ -785,6 +785,26 @@ The output sequence will not contain the specified words or word sequences.
 * As a consequence of the previous gotcha, the blacklist is case-sensitive.
   For example, if you ban the word "go", then the word "GO" may still appear as it considered a different word.
 
+### `no_repeat_ngram_size`: int (optional)
+
+N-gram is a sequence of a consecutive tokens.
+"N-gram size" is a length of that sequence.
+If `no_repeat_ngram_size = M` then the output sequence will not contain
+any N-grams with size of `M` tokens more than once (including the input text).
+
+For example, let's take the input sequence that consists of these tokens:
+`With boots and guns` (for simplicity, let's assume that each word is a single token).
+Now, if `no_repeat_ngram_size = 2` then the output won't be able to contain
+`With boots`, `boots and` or `and guns`.
+This parameter also take into account any currently generated text, not just the original input.
+So if the next two generated tokens are `shouting loud`,
+then this N-gram will also not appear in any further output (as well as `guns shouting`, etc).
+
+If `no_repeat_ngram_size = 1` then it means that the output text will not contain any tokens from the input
+and will not contain any duplicate tokens.
+
+By default, the value of this parameter is zero, which means that no N-gram restrictions apply.
+
 
 ## API response
 

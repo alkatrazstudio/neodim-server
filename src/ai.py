@@ -52,6 +52,7 @@ class RequestData:
     sequences_count: int = 1
     words_whitelist: Optional[list[str]] = None
     words_blacklist: Optional[list[str]] = None
+    no_repeat_ngram_size: Optional[int] = None
 
     def __post_init__(self):
         if self.top_p == 0:
@@ -76,6 +77,8 @@ class RequestData:
             self.repetition_penalty_slope = None
         if self.repetition_penalty_prompt == "":
             self.repetition_penalty_prompt = None
+        if self.no_repeat_ngram_size == 0:
+            self.no_repeat_ngram_size = None
 
 
 @dataclass
@@ -355,6 +358,7 @@ def generate(
                 return_dict_in_generate=False,
                 bad_words_ids=bad_words_ids,
                 begin_suppress_tokens=begin_suppress_tokens,
+                no_repeat_ngram_size=r.no_repeat_ngram_size,
 
                 **warpers_params
             )
