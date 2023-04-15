@@ -90,6 +90,14 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
             "transformer.ln_f": DeviceMapValue.FIRST_DEVICE,
             "lm_head": DeviceMapValue.FIRST_DEVICE
         }
+    },
+    ModelType.LLAMA: {
+        "layer_key_template": "model.layers.{layer}",
+        "device_map_template": {
+            "model.embed_tokens": DeviceMapValue.FIRST_DEVICE,
+            "model.norm": DeviceMapValue.FIRST_DEVICE,
+            "lm_head": DeviceMapValue.FIRST_DEVICE
+        }
     }
 }
 

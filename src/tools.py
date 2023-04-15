@@ -6,7 +6,8 @@ from enum import Enum
 from typing import Optional, Union
 
 import torch
-from transformers import BloomPreTrainedModel, CodeGenPreTrainedModel, OPTPreTrainedModel, XGLMPreTrainedModel
+from transformers import BloomPreTrainedModel, CodeGenPreTrainedModel, LlamaPreTrainedModel, OPTPreTrainedModel, \
+    XGLMPreTrainedModel
 from transformers import GPT2PreTrainedModel, GPTJPreTrainedModel, GPTNeoPreTrainedModel, GPTNeoXPreTrainedModel
 from transformers import PretrainedConfig, PreTrainedModel
 
@@ -20,6 +21,7 @@ class ModelType(Enum):
     OPT = "opt"
     CODEGEN = "codegen"
     BLOOM = "bloom"
+    LLAMA = "llama"
 
 
 def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> ModelType:
@@ -40,6 +42,8 @@ def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> Mod
         return ModelType.CODEGEN
     if isinstance(config, BloomPreTrainedModel.config_class):
         return ModelType.BLOOM
+    if isinstance(config, LlamaPreTrainedModel.config_class):
+        return ModelType.LLAMA
     raise RuntimeError(f"Unsupported model config class: {config.__class__.__name__}")
 
 
