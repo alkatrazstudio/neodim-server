@@ -14,7 +14,6 @@ import dev_map
 import server
 import tools
 from ai import GeneratedOutput, ModelPrecision
-from bnb_override import override_bnb
 from server import Callback, ServerRequestData
 
 
@@ -122,18 +121,13 @@ def load_model(
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
-    if device_map is not None and precision == ModelPrecision.INT8:
-        load_in_8bit_skip_modules = dev_map.get_modules_to_skip_for_int8(device_map)
-    else:
-        load_in_8bit_skip_modules = None
 
     model, tokenizer = ai.load_model(
         path=path,
         revision=revision,
         cache_dir=cache_dir,
         device_map=device_map,
-        precision=precision,
-        load_in_8bit_skip_modules=load_in_8bit_skip_modules
+        precision=precision
     )
 
     t_elapsed = round(time.time() - t_start)
@@ -239,7 +233,6 @@ def main() -> None:
         raise RuntimeError("--model is missing")
 
     print_gpu_info()
-    override_bnb()
     model, tokenizer, gpu_device = load_model(
         path=args.model,
         revision=args.model_revision,

@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from transformers import GenerationConfig, LogitsProcessorList, StoppingCriteriaList
 from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer
 
@@ -137,8 +137,7 @@ def load_model(
     revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
     device_map: Optional[DeviceMap] = None,
-    precision: ModelPrecision = ModelPrecision.FLOAT16,
-    load_in_8bit_skip_modules: Optional[list[str]] = None
+    precision: ModelPrecision = ModelPrecision.FLOAT16
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     args = {}
     match precision:
@@ -152,7 +151,12 @@ def load_model(
             args["torch_dtype"] = torch.float16
 
         case ModelPrecision.INT8:
-            args["load_in_8bit"] = True
+            args["torch_dtype"] = torch.float16
+            args["quantization_config"] = BitsAndBytesConfig(
+                load_in_8bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                llm_int8_skip_modules=["lm_head"]
+            )
 
     model = AutoModelForCausalLM.from_pretrained(
         path,
@@ -160,7 +164,6 @@ def load_model(
         low_cpu_mem_usage=True,
         cache_dir=cache_dir,
         device_map=device_map,
-        load_in_8bit_skip_modules=load_in_8bit_skip_modules,
         **args
     )
 

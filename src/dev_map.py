@@ -137,11 +137,3 @@ def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Op
         layer_index += 1
 
     return device_map
-
-
-def get_modules_to_skip_for_int8(device_map: DeviceMap) -> Optional[list[str]]:
-    layer_paths = [path for path, device in device_map.items() if device == DEVICE_CPU]
-
-    # adding lm_head based on comment from get_keys_to_not_convert in transformers/utils/bitsandbytes.py
-    # which says "for CausalLM modules we may want to keep the lm_head in full precision"
-    return layer_paths + ["lm_head"]
