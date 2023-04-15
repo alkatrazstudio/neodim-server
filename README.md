@@ -19,7 +19,7 @@ Repository branches:
 **NOTE:** before reading any further you must have at least a general grasp of the following topics:
 machine learning, text generation, language model, HTTP server, command line interface.
 Also, running this on Linux is recommended.
-If you have any other OS you need to install Python, Git, Bash and md5sum.
+If you have any other OS you need to install Python, Git, Bash, sed and md5sum.
 
 
 ## Contents
