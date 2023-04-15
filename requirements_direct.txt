@@ -8,3 +8,4 @@ bitsandbytes
 jsons
 regex
 packaging
+safetensors
