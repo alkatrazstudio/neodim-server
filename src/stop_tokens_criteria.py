@@ -20,7 +20,7 @@ class StopStringsType(Enum):
 @dataclass
 class StopStringMatch:
     stop_string: str
-    start_index: int
+    start_index_from_end: int  # This allows to not depend on possible token concatenation inconsistencies at the start
     match: str
 
 
@@ -91,7 +91,7 @@ class StopTokensCriteria(StoppingCriteria):
                     rx_match = self.stop_regexes[str_index].search(analyzed_text)
                     match = StopStringMatch(
                         stop_string=stop_string,
-                        start_index=rx_match.start(),
+                        start_index_from_end=len(analyzed_text) - rx_match.start(),
                         match=analyzed_text[rx_match.start():rx_match.end()]
                     ) if rx_match else None
                 else:
@@ -104,7 +104,7 @@ class StopTokensCriteria(StoppingCriteria):
                             start_index = analyzed_text.find(stop_string)
                         match = StopStringMatch(
                             stop_string=stop_string,
-                            start_index=start_index,
+                            start_index_from_end=len(analyzed_text) -start_index,
                             match=stop_string
                         ) if start_index >= 0 else None
                     else:

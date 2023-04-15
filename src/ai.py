@@ -402,8 +402,8 @@ def generate(
                 match = stop_criteria.matches[seq_idx]
                 stop_string = match.stop_string
                 stop_string_match = match.match
-                gen_txt_trimmed = gen_txt[0:match.start_index]
-                trimmed_tail = gen_txt[match.start_index + len(match.match):]
+                gen_txt_trimmed = gen_txt[0:-match.start_index_from_end]
+                trimmed_tail = gen_txt[len(gen_txt) - match.start_index_from_end + len(match.match):]
             else:
                 gen_txt_trimmed = gen_txt
                 stop_string = ""
