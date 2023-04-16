@@ -45,6 +45,17 @@ def has_extra_nl_space(tokenizer: PreTrainedTokenizer) -> bool:
     return tokenizer.__has_extra_nl_space
 
 
+def get_ignored_prefix(tokenizer: PreTrainedTokenizer) -> str:
+    if hasattr(tokenizer, "__ignored_prefix"):
+        return tokenizer.__ignored_prefix
+
+    test_str = "Test"
+    out_str = tokenizer.decode(str_to_tokens(test_str, tokenizer))
+    dec_pos = out_str.index(test_str)
+    tokenizer.__ignored_prefix = out_str[:dec_pos]
+    return tokenizer.__ignored_prefix
+
+
 def has_extra_nl(tokenizer: PreTrainedTokenizer) -> bool:
     if hasattr(tokenizer, "__has_extra_nl"):
         return tokenizer.__has_extra_nl
@@ -107,6 +118,10 @@ def tokens_to_str(
         if has_extra_nl_space(tokenizer):
             text = text.replace(S_NEWLINE + " ", "\n")
         text = text.replace(S_NEWLINE, "\n")
+
+    prefix = get_ignored_prefix(tokenizer)
+    if text.startswith(prefix):
+        text = text[len(prefix):]
     return text
 
 
