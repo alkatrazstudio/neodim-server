@@ -4,7 +4,7 @@
 import argparse
 import time
 from argparse import Namespace
-from typing import Final, Optional
+from typing import Final, Optional, Union
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -74,21 +74,21 @@ def print_gpu_info() -> None:
     print()
 
 
-def parse_layers(layer_strs: Optional[list[str]], layers_count: int) -> list[int]:
-    if layer_strs is None:
+def parse_layers(layers_distribution: Optional[list[Union[int, str]]], layers_count: int) -> list[int]:
+    if layers_distribution is None:
         return [1]
 
     explicit_count = 0
-    for layer_str in layer_strs:
-        if layer_str != AVAILABLE_LAYERS_CHAR:
-            explicit_count += int(layer_str)
+    for layer_spec in layers_distribution:
+        if layer_spec != AVAILABLE_LAYERS_CHAR:
+            explicit_count += int(layer_spec)
     available_count = layers_count - explicit_count
 
     layers = [
-        int(layer_str)
-        if layer_str != AVAILABLE_LAYERS_CHAR
+        int(layer_spec)
+        if layer_spec != AVAILABLE_LAYERS_CHAR
         else available_count
-        for layer_str in layer_strs
+        for layer_spec in layers_distribution
     ]
     return layers
 
@@ -98,7 +98,7 @@ def load_model(
     revision: Optional[str] = None,
     precision: ModelPrecision = ModelPrecision.FLOAT16,
     cache_dir: Optional[str] = None,
-    layer_strs: Optional[list[str]] = None
+    layers_distribution: Optional[list[Union[int, str]]] = None
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
     if not revision:
         print(f"Loading the model: {path}")
@@ -111,7 +111,7 @@ def load_model(
     model_type = tools.model_type(config)
 
     layers_count = tools.num_layers(config)
-    layers = parse_layers(layer_strs, layers_count)
+    layers = parse_layers(layers_distribution, layers_count)
     layers_str = ", ".join(f"GPU_{device_index}={layer}" for device_index, layer in enumerate(layers) if layer > 0)
     gpu_layers_count = sum(layers)
     cpu_layers_count = layers_count - gpu_layers_count
@@ -238,7 +238,7 @@ def main() -> None:
         revision=args.model_revision,
         precision=args.precision,
         cache_dir=args.cache_dir,
-        layer_strs=args.layer_strs
+        layers_distribution=args.layer_strs
     )
     run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 
