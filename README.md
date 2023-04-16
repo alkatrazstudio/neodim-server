@@ -732,7 +732,7 @@ If `truncate_prompt_until = [" "]` it may be truncated like this:
 The truncation will stop as early as possible.
 
 **NOTE:** If `truncate_prompt_until` is not set
-the truncation will be symbol-by-symbol,
+the truncation will be token-by-token,
 which is probably not what you want,
 e.g. it may leave half of the word in the beginning, like this:
 `ce chat. And then she left.`
