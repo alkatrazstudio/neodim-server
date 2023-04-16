@@ -137,37 +137,51 @@ def tokenize_input(
     truncate_untils = tools.normalize_str_list(truncate_untils)
     err = RuntimeError(f"Cannot fit the prompt in {max_tokens_len} tokens while using specified stop_strings")
 
-    preamble, preamble_tokens = normalize_str(preamble, tokenizer)
-    prompt, prompt_tokens = normalize_str(prompt, tokenizer)
-
     res = TokenizerResult()
+    preamble, preamble_tokens = normalize_str(preamble, tokenizer)
     res.preamble_tokens_count = len(preamble_tokens)
+
+    # never encode/decode the prompt without the preamble,
+    # because doing so may add extra "concatenation" tokens/symbols at the start of the prompt
+    full_input, full_input_tokens = normalize_str(preamble + prompt, tokenizer)
+    prompt = full_input[len(preamble):]
+    prompt_tokens = full_input_tokens[res.preamble_tokens_count:]
+
     res.preamble = preamble
     res.trimmed_prompt = prompt
     res.original_prompt_tokens_count = len(prompt_tokens)
     res.trimmed_prompt_tokens_count = res.original_prompt_tokens_count
-    res.input_tokens = preamble_tokens + prompt_tokens
+    res.input_tokens = full_input_tokens
     res.original_input_tokens_count = len(res.input_tokens)
 
     if not prompt and not preamble:
         return res
 
     max_allowed_prompt_tokens = max_tokens_len - res.preamble_tokens_count
-    if max_allowed_prompt_tokens < 0:
-        # seems like even preamble does not fit inside max_tokens_len
+    if res.preamble_tokens_count > max_tokens_len:
+        # even the preamble does not fit inside the maximum allowed input tokens
         raise err
 
-    if max_allowed_prompt_tokens >= res.original_prompt_tokens_count:
-        # the prompt is short enough, no need to trim anything
+    if res.preamble_tokens_count == max_tokens_len:
+        # only preamble fits the maximum allowed input tokens
+        res.trimmed_prompt = ""
+        res.trimmed_prompt_tokens_count = 0
+        res.input_tokens = preamble_tokens
+        return res
+
+    if max_tokens_len >= res.original_input_tokens_count:
+        # both preamble and prompt fit inside the maximum allowed input tokens, no need to trim anything
         return res
 
     trimmed_prompt_tokens = prompt_tokens[-max_allowed_prompt_tokens:]
-    res.trimmed_prompt = tokens_to_str(trimmed_prompt_tokens, tokenizer)
+    full_input_tokens = preamble_tokens + trimmed_prompt_tokens
+    full_input = tokens_to_str(full_input_tokens, tokenizer)
+    res.trimmed_prompt = full_input[len(preamble):]
     res.trimmed_prompt_tokens_count = len(trimmed_prompt_tokens)
 
     if not truncate_untils:
         # no specific truncate_until strings, do not trim any further
-        res.input_tokens = preamble_tokens + trimmed_prompt_tokens
+        res.input_tokens = full_input_tokens
         return res
 
     remove_pos = -1
@@ -195,9 +209,8 @@ def tokenize_input(
         # we eliminated the whole prompt, but there's no preamble either
         raise err
 
-    trimmed_prompt_tokens = str_to_tokens(res.trimmed_prompt, tokenizer)
-    res.trimmed_prompt_tokens_count = len(trimmed_prompt_tokens)
-    res.input_tokens = preamble_tokens + trimmed_prompt_tokens
+    res.input_tokens = str_to_tokens(preamble + res.trimmed_prompt, tokenizer)
+    res.trimmed_prompt_tokens_count = len(res.input_tokens) - res.preamble_tokens_count
     return res
 
 
