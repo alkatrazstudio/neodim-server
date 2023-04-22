@@ -104,7 +104,7 @@ class StopTokensCriteria(StoppingCriteria):
                             start_index = analyzed_text.find(stop_string)
                         match = StopStringMatch(
                             stop_string=stop_string,
-                            start_index_from_end=len(analyzed_text) -start_index,
+                            start_index_from_end=len(analyzed_text) - start_index,
                             match=stop_string
                         ) if start_index >= 0 else None
                     else:
