@@ -1,6 +1,19 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.11 (April 23, 2023)
+
+- Added: [no_repeat_ngram_size](README.md#no_repeat_ngram_size-int-optional) parameter
+- Added: [words_blacklist](README.md#words_blacklist-string-optional) parameter
+- Added: [words_whitelist](README.md#words_whitelist-string-optional) parameter
+- Added: support for [LLaMA](https://huggingface.co/models?other=llama) models
+- Added: support for safetensors
+- Improved: 8-bit models can now be loaded directly
+- Fixed: the playground misses some input parameters
+- Fixed: multiple encoding/decoding problems
+- Changed: the server now tries to generate at least one token
+
+
 ## v0.10 (March 4, 2023)
 
 - Fixed: specifying `top_k` gives a type error
