@@ -168,6 +168,7 @@ def load_model(
     )
 
     tokenizer = AutoTokenizer.from_pretrained(path)
+    tok.add_break_token(tokenizer, model.__actual_model)
 
     return model, tokenizer
 

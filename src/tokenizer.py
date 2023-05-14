@@ -6,12 +6,13 @@ import sys
 from typing import Final, Optional, Union
 
 import torch
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedModel, PreTrainedTokenizer
 
 import tools
 
 
 S_NEWLINE: Final[str] = "</s>"
+BREAK_TOKEN: Final[str] = "<|neodimbreak|>"
 
 
 class TokenizerResult:
@@ -96,12 +97,10 @@ def str_to_tokens(text: str, tokenizer: PreTrainedTokenizer) -> list[int]:
     return tokens
 
 
-def tokens_to_str(
+def remove_ignored_tokens(
     tokens: Union[list[int], torch.Tensor],
     tokenizer: PreTrainedTokenizer
-) -> str:
-    # Ignore special tokens to avoid adding things like <|endoftext|> to the output.
-    # Can't use skip_special_tokens=True because some special tokens (e.g. </s>) must not be skipped.
+) -> Union[list[int], torch.Tensor]:
     ignored_tokens = get_ignored_tokens(tokenizer)
     if isinstance(tokens, torch.Tensor):
         ignored_tokens = ignored_tokens.to(tokens.device)
@@ -109,6 +108,21 @@ def tokens_to_str(
     else:
         ignored_tokens = ignored_tokens.tolist()
         tokens = [token for token in tokens if token not in ignored_tokens]
+    return tokens
+
+
+def add_break_token(tokenizer: PreTrainedTokenizer, model: PreTrainedModel) -> None:
+    tokenizer.add_tokens([BREAK_TOKEN])
+    model.resize_token_embeddings(len(tokenizer))
+
+
+def tokens_to_str(
+    tokens: Union[list[int], torch.Tensor],
+    tokenizer: PreTrainedTokenizer
+) -> str:
+    # Ignore special tokens to avoid adding things like <|endoftext|> to the output.
+    # Can't use skip_special_tokens=True because some special tokens (e.g. </s>) must not be skipped.
+    tokens = remove_ignored_tokens(tokens, tokenizer)
 
     if not len(tokens):
         return ""
@@ -229,27 +243,38 @@ def tokenize_input(
     return res
 
 
-def add_space_prefix(words: list[str]) -> list[str]:
-    result_words = []
+def word_list_to_tokens_lists(words: list[str], tokenizer: PreTrainedTokenizer) -> list[list[int]]:
+    token_lists = []
     for word in words:
-        result_words.append(word)
         if word.startswith(" "):
-            word = word[1:]
+            spaced_word = word
+            non_spaced_word = word.lstrip()
         else:
-            word = " " + word
-        result_words.append(word)
-    return result_words
+            spaced_word = " " + word
+            non_spaced_word = word
+
+        non_spaced_ids = remove_ignored_tokens(str_to_tokens(non_spaced_word, tokenizer), tokenizer)
+
+        non_concat_word = BREAK_TOKEN + non_spaced_word
+        non_concat_ids = remove_ignored_tokens(str_to_tokens(non_concat_word, tokenizer), tokenizer)
+        non_concat_ids = non_concat_ids[1:]
+
+        token_lists.append(non_spaced_ids)
+        if non_concat_ids != non_spaced_ids:
+            token_lists.append(non_concat_ids)
+        else:
+            spaced_ids = remove_ignored_tokens(str_to_tokens(spaced_word, tokenizer), tokenizer)
+            token_lists.append(spaced_ids)
+    return token_lists
 
 
 def bad_words_by_whitelist(whitelist_words: list[str], tokenizer: PreTrainedTokenizer) -> list[list[int]]:
-    words = add_space_prefix(whitelist_words)
-    whitelist_words_ids = [str_to_tokens(word, tokenizer) for word in words]
+    whitelist_words_ids = word_list_to_tokens_lists(whitelist_words, tokenizer)
     whitelist_ids = list(itertools.chain.from_iterable(whitelist_words_ids))
     bad_ids = [[token_id] for token_id in tokenizer.get_vocab().values() if token_id not in whitelist_ids]
     return bad_ids
 
 
 def bad_words_by_blacklist(blacklist_words: list[str], tokenizer: PreTrainedTokenizer) -> list[list[int]]:
-    words = add_space_prefix(blacklist_words)
-    bad_ids = [str_to_tokens(word, tokenizer) for word in words]
+    bad_ids = word_list_to_tokens_lists(blacklist_words, tokenizer)
     return bad_ids
