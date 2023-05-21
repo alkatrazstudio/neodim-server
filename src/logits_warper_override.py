@@ -23,7 +23,7 @@ class WarperId(Enum):
     ALL = "*"
 
 
-DEFAULT_WARPER_TYPES: Final[dict[type(LogitsWarper), WarperId]] = {
+DEFAULT_WARPER_TYPES: Final[dict[type[LogitsWarper], WarperId]] = {
     RepetitionPenaltyLogitsWarper: WarperId.REPETITION_PENALTY,
     TemperatureLogitsWarper:       WarperId.TEMPERATURE,
     TopKLogitsWarper:              WarperId.TOP_K,
