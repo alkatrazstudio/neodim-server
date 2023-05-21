@@ -415,12 +415,12 @@ def generate(
                 begin_suppress_tokens = None
 
             out_tensor = model.generate(
-                in_tensor,
+                inputs=in_tensor,
                 generation_config=generation_config,
 
                 do_sample=do_sample,
-                min_length=input_tokens_len + r.generated_tokens_count,
-                max_length=input_tokens_len + r.generated_tokens_count,
+                max_new_tokens=r.generated_tokens_count,
+                min_new_tokens=r.generated_tokens_count,
                 use_cache=True,  # insanely slow without the cache (but uses much less VRAM)
                 num_return_sequences=r.sequences_count,
                 num_beams=1,
@@ -511,6 +511,8 @@ def generate(
     mem_stats_arrays.append(GpuMemStats.from_all_devices())
     gpus = GpuInfo.from_all_devices(mem_stats_arrays)
 
+    generated_tokens_count = out_tokens_len - input_tokens_len
+
     gen_out = GeneratedOutput(
         original_input_tokens_count=tok_res.original_input_tokens_count,
         used_input_tokens_count=input_tokens_len,
@@ -525,7 +527,7 @@ def generate(
         used_repetition_penalty_range_at_end=used_repetition_penalty_range_at_end,
         used_repetition_penalty_tokens_count_at_end=used_repetition_penalty_tokens_count_at_end,
         output_tokens_count=out_tokens_len,
-        generated_tokens_count=out_tokens_len - len(tok_res.input_tokens),
+        generated_tokens_count=generated_tokens_count,
         sequences=sequences,
         gpus=gpus
     )

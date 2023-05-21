@@ -48,4 +48,5 @@ init_env
 popd > /dev/null
 
 export BITSANDBYTES_NOWELCOME=1
-env PYTHONWARNINGS="ignore:TypedStorage is deprecated" python "$ROOT_DIR/src/main.py" "$@"
+export PYTHONWARNINGS="ignore:TypedStorage is deprecated"
+python "$ROOT_DIR/src/main.py" "$@"
