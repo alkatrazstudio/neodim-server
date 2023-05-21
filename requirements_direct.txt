@@ -9,3 +9,4 @@ jsons
 regex
 packaging
 safetensors
+auto-gptq[triton] @ git+https://github.com/PanQiWei/AutoGPTQ.git@d4011d29c623e739e91b842a87fce62a38c6e538

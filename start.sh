@@ -8,7 +8,7 @@ HASH_FILE=.requirements_hash
 
 
 function requirements_hash() {
-    A=($(md5sum requirements.txt))
+    A=($(cat pip.env requirements.txt | md5sum))
     printf "%s" "${A[0]}"
 }
 
@@ -16,6 +16,11 @@ function reinstall() {
     rm -rf "$VENV_DIR"
     python3 -m venv "$VENV_DIR"
     source "$VENV_DIR/bin/activate"
+
+    set -a
+    source pip.env
+    set +a
+
     pip install -r requirements.txt
     requirements_hash > "$HASH_FILE"
 }

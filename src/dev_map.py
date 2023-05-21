@@ -145,3 +145,8 @@ def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Op
         layer_index += 1
 
     return device_map
+
+
+def is_all_on_gpu(device_map: DeviceMap) -> bool:
+    is_gpu_only = all(val != DEVICE_CPU for val in device_map.values())
+    return is_gpu_only

@@ -12,9 +12,14 @@ fi
 
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
+
+set -a
+source pip.env
+set +a
+
 pip install -r requirements_direct.txt
 echo "--extra-index-url https://download.pytorch.org/whl/cu117" > requirements.txt
 pip freeze >> requirements.txt
 
-REQ_HASH=($(md5sum requirements.txt))
+REQ_HASH=($(cat pip.env requirements.txt | md5sum))
 printf "%s" "${REQ_HASH[0]}" > .requirements_hash

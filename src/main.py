@@ -98,7 +98,11 @@ def load_model(
     revision: Optional[str] = None,
     precision: ModelPrecision = ModelPrecision.FLOAT16,
     cache_dir: Optional[str] = None,
-    layers_distribution: Optional[list[Union[int, str]]] = None
+    layers_distribution: Optional[list[Union[int, str]]] = None,
+    group_size: int = 128,
+    model_basename: Optional[str] = None,
+    true_sequential: bool = True,
+    use_safetensors: bool = True
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
     if not revision:
         print(f"Loading the model: {path}")
@@ -121,24 +125,31 @@ def load_model(
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
+    if device_map is not None:
+        gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
+    else:
+        gpu_device = None
 
     model, tokenizer = ai.load_model(
         path=path,
         revision=revision,
         cache_dir=cache_dir,
         device_map=device_map,
-        precision=precision
+        precision=precision,
+        model_basename=model_basename,
+        group_size=group_size,
+        true_sequential=true_sequential,
+        gpu_device=gpu_device,
+        use_safetensors=use_safetensors
     )
 
     t_elapsed = round(time.time() - t_start)
     print(f"Model {model.__class__.__name__} ({model_type.name}) loaded in {t_elapsed}s")
     if device_map is not None:
-        gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
         print(f"Distributed {gpu_layers_count} layer(s) to {gpus_count} GPU(s), and {cpu_layers_count} layers to CPU")
     else:
         print("Moving the entire model to CPU")
         model = ai.move_to_cpu(model)
-        gpu_device = None
 
     print()
 
@@ -211,6 +222,23 @@ def parse_args() -> Namespace:
                         help=f"Load the model in this precision ({', '.join([x.value for x in ModelPrecision])}). "
                              f"Default: {ModelPrecision.FLOAT16.value}",
                         default=ModelPrecision.FLOAT16)
+    parser.add_argument("--model-basename",
+                        help="Filename without extension of the model "
+                             "Currently only supported for GPTQ precisions.")
+    parser.add_argument("--group-size",
+                        help="Group size for GPTQ. "
+                             "Default: 128",
+                        default="128")
+    parser.add_argument("--true-sequential",
+                        help="True sequential flag for GPTQ (true or false). "
+                             "Default: true",
+                        default="true")
+    parser.add_argument("--safetensors",
+                        help="Load *.safetensors model (true or false). "
+                             "If false - load *.bin model. "
+                             "Currently only supported for GPTQ precisions. "
+                             "Default: true",
+                        default="true")
     parser.add_argument("--version",
                         help="Show the version of this Neodim Server",
                         action="store_true")
@@ -219,6 +247,9 @@ def parse_args() -> Namespace:
     args.listen_port = int(args.listen_port)
     args.layer_strs = args.layers.split(",")
     args.precision = ModelPrecision(args.precision)
+    args.group_size = int(args.group_size)
+    args.true_sequential = args.true_sequential == "true"
+    args.safetensors = args.safetensors == "true"
     return args
 
 
@@ -238,7 +269,11 @@ def main() -> None:
         revision=args.model_revision,
         precision=args.precision,
         cache_dir=args.cache_dir,
-        layers_distribution=args.layer_strs
+        layers_distribution=args.layer_strs,
+        model_basename=args.model_basename,
+        group_size=args.group_size,
+        true_sequential=args.true_sequential,
+        use_safetensors=args.safetensors
     )
     run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 

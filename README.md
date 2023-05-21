@@ -312,8 +312,7 @@ and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`)
 or put all layers on a single GPU (e.g. `--layers=a`, `--layers=0,a` etc.).
 
-
-### `precision`: original|float32|float16|int8 (optional, default=float16)
+### `precision`: original|float32|float16|int8|gptq2|gptq4|gptq8 (optional, default=float16)
 
 Neodim Server can load 16-bit and 32-bit models,
 but using this parameter the model can be load in memory with a specified precision.
@@ -327,13 +326,14 @@ This allows to seek balance between VRAM consumption and the quality of the gene
 * `int8` - 8-bit integer precision.
   Compared to `float16`, loading the model in `int8` may lower the quality of the generated text,
   but the model will consume around 1.5 times less VRAM.
+* `gptq2`, `gptq4`, `gptq8` - [read below](#gptq)
 * `original` - use the original precision of the model.
 
 It only makes sense to downgrade the model's precision.
 For example, if you load 16-bit model in 32-bit precision mode
 then it will consume twice as much VRAM, but it won't improve the quality of the generated text.
 
-**Notes about the 8-bit precision:**
+#### **Notes about the 8-bit precision:**
 
 1. You need to install CUDA Toolkit.
    There are several ways to do it:
@@ -344,6 +344,62 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
 3. You can load 8-bit models directly, but you still need to specify `--precision=int8`.
    Also, in this case all layers must be on GPU, e.g. `--layers=a`.
 4. Only NVIDIA RTX 20xx or later are supported.
+
+#### **GPTQ**
+
+Neodim Server supports 2-bit, 4-bit and 8-bit models quantized with [GPTQ](https://arxiv.org/abs/2210.17323).
+4-bit models consume roughly 1.5-2 times less VRAM than 8-bit models,
+and only have slightly lesser quality (the bigger the model - the less the quality loss).
+On HuggingFace Hub such models will have either "GPTQ" and/or "4bit" and "128g/64g/32g" in their name, but not "GGML" (that's a different quantization technique, not compatible with Neodim Server).
+
+Example 4-bit GPTQ model: https://huggingface.co/TheBloke/vicuna-13B-1.1-GPTQ-4bit-128g.
+
+To load GPTQ models you need to specify additional parameters to CLI:
+[--model-basename](#model-basename-string-optional),
+[--group-size](#group-size-int-optional),
+[--true-sequential](#true-sequential-truefalse-optional-defaulttrue)
+and [--safetensors](#safetensors-truefalse-optional-defaulttrue).
+The last three already have popular defaults, so most of the time you only need to specify `--model-basename`.
+
+Current limitations and gotchas:
+
+* All model layers must be on GPUs, i.e. you need something like `--layers=a`.
+* Loading directly from HuggingFace Hub is not supported, i.e. you can only specify a local folder for `--model`.
+* Some models may not load, it depends on how they were quantized.
+* `--precision=gptq8` is different from `--precision=int8` - models of these precisions are not compatible with each other.
+* `--precision=int8` can quantize the model on fly, i.e. you can load float16 model in INT8 precision. GPTQ models, on the other hand, need to be quantized beforehand.
+* You will need `tokenizer.json` for GPTQ models,
+otherwise they will be very slow.
+
+Example that shows how to load the abovementioned model:
+```sh
+./start.sh --model=/opt/models/vicuna-13B-1.1-GPTQ-4bit-128g --listen-address=0.0.0.0 --layers=a --precision=gptq4 --model-basename=vicuna-13B-1.1-GPTQ-4bit-128g.latest
+```
+
+### `model-basename`: string (optional)
+
+Specify a model basename, i.e. the filename without directory and extenstion.
+This setting only applied for [GPTQ](#gptq) models, i.e. if `--precision=gptq*`.
+
+For example, to load the model `/some/dir/wizardLM-7B-GPTQ.safetensors`,
+use this: `--model=/some/dir --model-basename=wizardLM-7B-GPTQ --safetensors=true`.
+
+### `group-size`: int (optional)
+
+The group size parameter for a [GPTQ](#gptq) model.
+This value is usually mentioned in the description of the model.
+Sometimes it's in the filename - a number with a `g` suffix,
+e.g. `koala-13B-GPTQ-4bit-128g` has group size of `128`.
+
+### `true-sequential`: true|false (optional, default=true)
+
+The "true sequential" flag for a [GPTQ](#gptq) model.
+This value is usually mentioned in the description of the model.
+
+### `safetensors`: true|false (optional, default=true)
+
+Whether to load [GPTQ](#gptq) model in `safetensors` format.
+If `false`, then the `*.bin` or `*.pt` file will be loaded.
 
 
 ## Prompt and preamble
@@ -1066,6 +1122,11 @@ There are limitations when loading the model in 8-bit precision.
 See more details in [precision](#precision-originalfloat32float16int8-optional-defaultfloat16) parameter description.
 
 
+### Using GPTQ models
+
+Using `4-bit` [GPTQ](#gptq) precision will reduce VRAM consumption by a factor of 3 compared to regular `float16` models.
+
+
 ## Third-party libraries
 
 There are some embedded third-party libraries.
@@ -1082,6 +1143,7 @@ Other direct dependencies:
 * [regex](https://pypi.org/project/regex/)
 * [packaging](https://pypi.org/project/packaging/)
 * [safetensors](https://pypi.org/project/safetensors/)
+* [auto-gptq](https://pypi.org/project/auto-gptq/)
 
 
 ## License

@@ -7,10 +7,13 @@ from enum import Enum
 from typing import Optional
 
 import torch
+from auto_gptq.modeling import BaseGPTQForCausalLM
+from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from transformers import GenerationConfig, LogitsProcessorList, StoppingCriteriaList
 from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer
 
+import dev_map
 import logits_warper_override as lwo
 import tokenizer as tok
 import tools
@@ -116,6 +119,9 @@ class ModelPrecision(Enum):
     FLOAT32 = "float32"
     FLOAT16 = "float16"
     INT8 = "int8"
+    GPTQ2 = "gptq2"
+    GPTQ4 = "gptq4"
+    GPTQ8 = "gptq8"
 
 
 def load_config(
@@ -132,40 +138,103 @@ def load_config(
     return cfg
 
 
+def load_gptq_model(
+    path: str,
+    device_map: Optional[DeviceMap],
+    precision: ModelPrecision,
+    group_size: int,
+    model_basename: Optional[str],
+    true_sequential: bool,
+    gpu_device: Optional[int],
+    use_safetensors: bool = True
+) -> Optional[BaseGPTQForCausalLM]:
+    match precision:
+        case ModelPrecision.GPTQ2:
+            bits = 2
+
+        case ModelPrecision.GPTQ4:
+            bits = 4
+
+        case ModelPrecision.GPTQ8:
+            bits = 8
+
+        case _:
+            return None
+
+    quantize_config = BaseQuantizeConfig(
+        bits=bits,
+        group_size=group_size,
+        true_sequential=true_sequential
+    )
+    if not dev_map.is_all_on_gpu(device_map):
+        raise NotImplementedError("Offloading to CPU is not supported for GPTQ")
+    device_str = f"cuda:{gpu_device}"
+    model = AutoGPTQForCausalLM.from_quantized(
+        path,
+        device=device_str,
+        use_safetensors=use_safetensors,
+        quantize_config=quantize_config,
+        model_basename=model_basename,
+        use_triton=True,
+        device_map=device_map
+    )
+    return model
+
+
 def load_model(
     path: str,
     revision: Optional[str] = None,
     cache_dir: Optional[str] = None,
     device_map: Optional[DeviceMap] = None,
-    precision: ModelPrecision = ModelPrecision.FLOAT16
+    precision: ModelPrecision = ModelPrecision.FLOAT16,
+    group_size: int = 128,
+    model_basename: Optional[str] = None,
+    true_sequential: bool = True,
+    gpu_device: Optional[int] = 0,
+    use_safetensors: bool = True
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     args = {}
-    match precision:
-        case ModelPrecision.ORIGINAL:
-            pass
 
-        case ModelPrecision.FLOAT32:
-            args["torch_dtype"] = torch.float32
-
-        case ModelPrecision.FLOAT16:
-            args["torch_dtype"] = torch.float16
-
-        case ModelPrecision.INT8:
-            args["torch_dtype"] = torch.float16
-            args["quantization_config"] = BitsAndBytesConfig(
-                load_in_8bit=True,
-                llm_int8_enable_fp32_cpu_offload=True,
-                llm_int8_skip_modules=["lm_head"]
-            )
-
-    model = AutoModelForCausalLM.from_pretrained(
-        path,
-        revision=revision,
-        low_cpu_mem_usage=True,
-        cache_dir=cache_dir,
+    model = load_gptq_model(
+        path=path,
         device_map=device_map,
-        **args
+        precision=precision,
+        group_size=group_size,
+        model_basename=model_basename,
+        true_sequential=true_sequential,
+        gpu_device=gpu_device,
+        use_safetensors=use_safetensors
     )
+    if model is None:
+        match precision:
+            case ModelPrecision.ORIGINAL:
+                pass
+
+            case ModelPrecision.FLOAT32:
+                args["torch_dtype"] = torch.float32
+
+            case ModelPrecision.FLOAT16:
+                args["torch_dtype"] = torch.float16
+
+            case ModelPrecision.INT8:
+                args["torch_dtype"] = torch.float16
+                args["quantization_config"] = BitsAndBytesConfig(
+                    load_in_8bit=True,
+                    llm_int8_enable_fp32_cpu_offload=True,
+                    llm_int8_skip_modules=["lm_head"]
+                )
+
+        model = AutoModelForCausalLM.from_pretrained(
+            path,
+            revision=revision,
+            low_cpu_mem_usage=True,
+            cache_dir=cache_dir,
+            device_map=device_map,
+            **args
+        )
+        model.__actual_model = model
+    else:
+        model.__actual_model = model.model
 
     tokenizer = AutoTokenizer.from_pretrained(path)
     tok.add_break_token(tokenizer, model.__actual_model)

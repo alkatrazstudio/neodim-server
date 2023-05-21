@@ -77,10 +77,10 @@ def override_get_logits_warper(
         warpers.sort(key=lambda warper: sort_warpers(warper, final_order, all_index))
         return warpers
 
-    model.original_get_logits_warper = model._get_logits_warper
-    model._get_logits_warper = MethodType(new_get_logits_warper, model)
+    model.__actual_model.original_get_logits_warper = model.__actual_model._get_logits_warper
+    model.__actual_model._get_logits_warper = MethodType(new_get_logits_warper, model.__actual_model)
 
 
 def restore_get_logits_warper(model: PreTrainedModel) -> None:
-    model._get_logits_warper = model.original_get_logits_warper
-    delattr(model, "original_get_logits_warper")
+    model.__actual_model._get_logits_warper = model.__actual_model.original_get_logits_warper
+    delattr(model.__actual_model, "original_get_logits_warper")
