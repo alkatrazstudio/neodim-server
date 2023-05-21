@@ -2,9 +2,10 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Callable, Final, Optional, Type
+from typing import Final
 
 import jsons
 from packaging.specifiers import SpecifierSet
@@ -15,7 +16,7 @@ from ai import GeneratedOutput, RequestData
 
 @dataclass
 class ServerRequestData(RequestData):
-    required_server_version: Optional[str] = None
+    required_server_version: str | None = None
 
 
 Callback = Callable[[ServerRequestData], GeneratedOutput]
@@ -30,7 +31,7 @@ def name_and_version():
     return f"{SERVER_NAME} v{SERVER_VERSION}"
 
 
-def handler_with_callback(callback: Callback) -> Type[BaseHTTPRequestHandler]:
+def handler_with_callback(callback: Callback) -> type[BaseHTTPRequestHandler]:
     class HttpServerHandler(BaseHTTPRequestHandler):
         def generate(self) -> GeneratedOutput:
             content_len = int(self.headers["content-length"])

@@ -4,7 +4,7 @@
 import argparse
 import time
 from argparse import Namespace
-from typing import Final, Optional, Union
+from typing import Final
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -20,7 +20,7 @@ from server import Callback, ServerRequestData
 AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
-def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: Optional[int]) -> Callback:
+def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: int | None) -> Callback:
     def request_callback(request: ServerRequestData) -> GeneratedOutput:
         tools.cleanup()
 
@@ -74,7 +74,7 @@ def print_gpu_info() -> None:
     print()
 
 
-def parse_layers(layers_distribution: Optional[list[Union[int, str]]], layers_count: int) -> list[int]:
+def parse_layers(layers_distribution: list[int | str] | None, layers_count: int) -> list[int]:
     if layers_distribution is None:
         return [1]
 
@@ -95,15 +95,15 @@ def parse_layers(layers_distribution: Optional[list[Union[int, str]]], layers_co
 
 def load_model(
     path: str,
-    revision: Optional[str] = None,
+    revision: str | None = None,
     precision: ModelPrecision = ModelPrecision.FLOAT16,
-    cache_dir: Optional[str] = None,
-    layers_distribution: Optional[list[Union[int, str]]] = None,
+    cache_dir: str | None = None,
+    layers_distribution: list[int | str] | None = None,
     group_size: int = 128,
-    model_basename: Optional[str] = None,
+    model_basename: str | None = None,
     true_sequential: bool = True,
     use_safetensors: bool = True
-) -> tuple[PreTrainedModel, PreTrainedTokenizer, Optional[int]]:
+) -> tuple[PreTrainedModel, PreTrainedTokenizer, int | None]:
     if not revision:
         print(f"Loading the model: {path}")
     else:
@@ -171,7 +171,7 @@ def print_free_ram():
 def run_ai_server(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
-    gpu_device: Optional[int] = None,
+    gpu_device: int | None = None,
     ip: str = "127.0.0.1",
     port: int = 8787
 ) -> None:

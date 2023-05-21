@@ -3,7 +3,6 @@
 
 import gc
 from enum import Enum
-from typing import Optional, Union
 
 import torch
 from transformers import BloomPreTrainedModel, CodeGenPreTrainedModel, LlamaPreTrainedModel, OPTPreTrainedModel, \
@@ -24,7 +23,7 @@ class ModelType(Enum):
     LLAMA = "llama"
 
 
-def model_type(model_or_config: Union[PreTrainedModel, PretrainedConfig]) -> ModelType:
+def model_type(model_or_config: PreTrainedModel | PretrainedConfig) -> ModelType:
     config = model_or_config if isinstance(model_or_config, PretrainedConfig) else model_or_config.config
     if isinstance(config, GPTNeoPreTrainedModel.config_class):
         return ModelType.GPT_NEO
@@ -62,7 +61,7 @@ def cleanup() -> None:
     torch.cuda.empty_cache()
 
 
-def normalize_str_list(strs: Optional[list[str]] = None) -> list[str]:
+def normalize_str_list(strs: list[str] | None = None) -> list[str]:
     if not strs:
         strs = []
     if isinstance(strs, str):

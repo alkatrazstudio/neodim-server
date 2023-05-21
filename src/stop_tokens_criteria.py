@@ -3,7 +3,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import torch
 from regex import regex
@@ -25,7 +24,7 @@ class StopStringMatch:
 
 
 class StopTokensCriteria(StoppingCriteria):
-    matches: list[Optional[StopStringMatch]]
+    matches: list[StopStringMatch | None]
 
     def __init__(
         self,

@@ -3,7 +3,7 @@
 
 import itertools
 import sys
-from typing import Final, Optional, Union
+from typing import Final
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -98,9 +98,9 @@ def str_to_tokens(text: str, tokenizer: PreTrainedTokenizer) -> list[int]:
 
 
 def remove_ignored_tokens(
-    tokens: Union[list[int], torch.Tensor],
+    tokens: list[int] | torch.Tensor,
     tokenizer: PreTrainedTokenizer
-) -> Union[list[int], torch.Tensor]:
+) -> list[int] | torch.Tensor:
     ignored_tokens = get_ignored_tokens(tokenizer)
     if isinstance(tokens, torch.Tensor):
         ignored_tokens = ignored_tokens.to(tokens.device)
@@ -117,7 +117,7 @@ def add_break_token(tokenizer: PreTrainedTokenizer, model: PreTrainedModel) -> N
 
 
 def tokens_to_str(
-    tokens: Union[list[int], torch.Tensor],
+    tokens: list[int] | torch.Tensor,
     tokenizer: PreTrainedTokenizer
 ) -> str:
     # Ignore special tokens to avoid adding things like <|endoftext|> to the output.
@@ -159,7 +159,7 @@ def normalize_str(text: str, tokenizer: PreTrainedTokenizer) -> tuple[str, list[
 def tokenize_input(
     prompt: str,
     preamble: str,
-    truncate_untils: Optional[list[str]],
+    truncate_untils: list[str] | None,
     tokenizer: PreTrainedTokenizer,
     max_tokens_len: int
 ) -> TokenizerResult:

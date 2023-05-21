@@ -4,7 +4,6 @@
 import copy
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import torch
 from auto_gptq.modeling import BaseGPTQForCausalLM
@@ -32,30 +31,30 @@ class RequestData:
     generated_tokens_count: int
     max_total_tokens: int
     preamble: str = ""
-    stop_strings: Optional[list[str]] = None
-    stop_strings_type: Optional[StopStringsType] = StopStringsType.STRING
+    stop_strings: list[str] | None = None
+    stop_strings_type: StopStringsType = StopStringsType.STRING
     stop_strings_required_matches_count: int = 1
-    truncate_prompt_until: Optional[list[str]] = None
-    gpu_device: Optional[int] = 0
-    repetition_penalty: Optional[float] = None
-    repetition_penalty_range: Optional[int] = None
-    repetition_penalty_slope: Optional[float] = None
+    truncate_prompt_until: list[str] | None = None
+    gpu_device: int | None = 0
+    repetition_penalty: float | None = None
+    repetition_penalty_range: int | None = None
+    repetition_penalty_slope: float | None = None
     repetition_penalty_include_preamble: bool = False
     repetition_penalty_include_generated: RepPenGenerated = RepPenGenerated.SLIDE
     repetition_penalty_truncate_to_input: bool = False
-    repetition_penalty_prompt: Optional[str] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
-    top_k: Optional[int] = None
-    tfs: Optional[float] = None
-    typical: Optional[float] = None
-    top_a: Optional[float] = None
-    penalty_alpha: Optional[float] = None
-    warpers_order: Optional[list[WarperId]] = None
+    repetition_penalty_prompt: str | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    top_k: int | None = None
+    tfs: float | None = None
+    typical: float | None = None
+    top_a: float | None = None
+    penalty_alpha: float | None = None
+    warpers_order: list[WarperId] | None = None
     sequences_count: int = 1
-    words_whitelist: Optional[list[str]] = None
-    words_blacklist: Optional[list[str]] = None
-    no_repeat_ngram_size: Optional[int] = None
+    words_whitelist: list[str] | None = None
+    words_blacklist: list[str] | None = None
+    no_repeat_ngram_size: int | None = None
     can_stop_early: bool = False
 
     def __post_init__(self):
@@ -127,8 +126,8 @@ class ModelPrecision(Enum):
 
 def load_config(
     model_path: str,
-    model_revision: Optional[str] = None,
-    cache_dir: Optional[str] = None
+    model_revision: str | None = None,
+    cache_dir: str | None = None
 ) -> PretrainedConfig:
     cfg = AutoConfig.from_pretrained(
         model_path,
@@ -141,14 +140,14 @@ def load_config(
 
 def load_gptq_model(
     path: str,
-    device_map: Optional[DeviceMap],
+    device_map: DeviceMap | None,
     precision: ModelPrecision,
     group_size: int,
-    model_basename: Optional[str],
+    model_basename: str | None,
     true_sequential: bool,
-    gpu_device: Optional[int],
+    gpu_device: int | None,
     use_safetensors: bool = True
-) -> Optional[BaseGPTQForCausalLM]:
+) -> BaseGPTQForCausalLM | None:
     match precision:
         case ModelPrecision.GPTQ2:
             bits = 2
@@ -184,14 +183,14 @@ def load_gptq_model(
 
 def load_model(
     path: str,
-    revision: Optional[str] = None,
-    cache_dir: Optional[str] = None,
-    device_map: Optional[DeviceMap] = None,
+    revision: str | None = None,
+    cache_dir: str | None = None,
+    device_map: DeviceMap | None = None,
     precision: ModelPrecision = ModelPrecision.FLOAT16,
     group_size: int = 128,
-    model_basename: Optional[str] = None,
+    model_basename: str | None = None,
     true_sequential: bool = True,
-    gpu_device: Optional[int] = 0,
+    gpu_device: int | None = 0,
     use_safetensors: bool = True
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     args = {}
@@ -276,7 +275,7 @@ def create_repetition_penalty_warper(
     request: RequestData,
     tok_res: TokenizerResult,
     input_tokens_len: int
-) -> Optional[RepetitionPenaltyLogitsWarper]:
+) -> RepetitionPenaltyLogitsWarper | None:
     r = request
     if r.repetition_penalty is not None and r.repetition_penalty_range is not None:
         repetition_penalty_range = r.repetition_penalty_range
@@ -324,7 +323,7 @@ def generate(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
     request: RequestData,
-    gpu_device: Optional[int] = 0
+    gpu_device: int | None = 0
 ) -> GeneratedOutput:
     r = request
 

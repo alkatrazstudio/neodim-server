@@ -2,7 +2,7 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 from enum import Enum
-from typing import Final, Optional, TypedDict, Union
+from typing import Final, TypedDict
 
 from tools import ModelType
 
@@ -17,7 +17,7 @@ class DeviceMapInfo(TypedDict):
     device_map_template: dict[str, DeviceMapValue]
 
 
-DeviceMap = dict[str, Union[str, int]]
+DeviceMap = dict[str, str | int]
 DEVICE_CPU: Final[str] = "cpu"
 
 
@@ -102,7 +102,7 @@ DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
 }
 
 
-def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> Optional[DeviceMap]:
+def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> DeviceMap | None:
     gpu_layers_count = sum(gpu_layers)
     if not gpu_layers_count:
         return None

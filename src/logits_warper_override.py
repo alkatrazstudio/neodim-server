@@ -3,7 +3,7 @@
 
 from enum import Enum
 from types import MethodType
-from typing import Final, Optional
+from typing import Final
 
 from transformers import LogitsProcessorList, LogitsWarper, PreTrainedModel
 from transformers import TemperatureLogitsWarper, TopKLogitsWarper, TopPLogitsWarper, TypicalLogitsWarper
@@ -52,10 +52,10 @@ def sort_warpers(warper: LogitsWarper, order: list[WarperId], all_index: int) ->
 # Transformers do not provide any way to set custom logits warpers
 def override_get_logits_warper(
     model: PreTrainedModel,
-    tfs: Optional[float] = None,
-    top_a: Optional[float] = None,
-    repetition_penalty_warper: Optional[RepetitionPenaltyLogitsWarper] = None,
-    order: Optional[list[WarperId]] = None
+    tfs: float | None = None,
+    top_a: float | None = None,
+    repetition_penalty_warper: RepetitionPenaltyLogitsWarper | None = None,
+    order: list[WarperId] | None = None
 ) -> None:
     def new_get_logits_warper(self, *args, **kwargs) -> LogitsProcessorList:
         warpers = self.original_get_logits_warper(*args, **kwargs)

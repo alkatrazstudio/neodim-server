@@ -2,7 +2,6 @@
 # 🄯 2022, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 from enum import Enum
-from typing import Optional
 
 import torch
 
@@ -20,10 +19,10 @@ class RepPenGenerated(Enum):
 # so to make is easier to keep it in sync with upstream there should not be any modifications to it.
 # Instead, all modifications should happen outside, in child classes.
 class RepetitionPenaltyLogitsWarper(_RepPenWarper):
-    first_tokens: Optional[torch.LongTensor] = None
-    last_tokens: Optional[torch.LongTensor] = None
-    first_range: Optional[int] = None
-    last_range: Optional[int] = None
+    first_tokens: torch.LongTensor | None = None
+    last_tokens: torch.LongTensor | None = None
+    first_range: int | None = None
+    last_range: int | None = None
 
     def __init__(
         self,
@@ -32,10 +31,10 @@ class RepetitionPenaltyLogitsWarper(_RepPenWarper):
         penalty_range: int,
         preamble_tokens_count: int = 0,
         include_preamble: bool = False,
-        penalty_slope: Optional[float] = None,
+        penalty_slope: float | None = None,
         include_generated: RepPenGenerated = RepPenGenerated.SLIDE,
         truncate_to_input: bool = False,
-        prompt_tokens: Optional[torch.LongTensor] = None
+        prompt_tokens: torch.LongTensor | None = None
     ):
         super().__init__()
         if penalty_slope is None:
