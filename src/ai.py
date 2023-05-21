@@ -56,6 +56,7 @@ class RequestData:
     words_whitelist: Optional[list[str]] = None
     words_blacklist: Optional[list[str]] = None
     no_repeat_ngram_size: Optional[int] = None
+    can_stop_early: bool = False
 
     def __post_init__(self):
         if self.top_p == 0:
@@ -398,16 +399,14 @@ def generate(
                 cfg.update(**warpers_params)
                 logits_processor = model._get_logits_warper(generation_config=cfg)
 
+            bad_words_ids = []
             if r.words_whitelist is not None:
-                bad_words_ids = tok.bad_words_by_whitelist(r.words_whitelist, tokenizer)
-            else:
-                bad_words_ids = None
-
+                bad_words_ids += tok.bad_words_by_whitelist(r.words_whitelist, tokenizer)
             if r.words_blacklist:
                 blacklisted_word_ids = tok.bad_words_by_blacklist(r.words_blacklist, tokenizer)
-                if bad_words_ids is None:
-                    bad_words_ids = []
                 bad_words_ids += blacklisted_word_ids
+            if not r.can_stop_early:
+                bad_words_ids += [[model.config.eos_token_id]]
 
             if model.config.eos_token_id is not None:
                 begin_suppress_tokens = [model.config.eos_token_id]

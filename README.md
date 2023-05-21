@@ -510,6 +510,8 @@ A token can represent any amount of text, but usually it's around 4-6 letters an
 It's not guaranteed that the generated text will contain all `generated_tokens_count` tokens,
 but the generated text will never exceed this amount of tokens.
 
+See also: [can_stop_early](#can_stop_early-bool-optional-defaultfalse).
+
 ### `max_total_tokens`: int (required)
 
 Combined length of `preamble`, `prompt` and the resulting generated text must fit within this amount of tokens.
@@ -861,6 +863,14 @@ If `no_repeat_ngram_size = 1` then it means that the output text will not contai
 and will not contain any duplicate tokens.
 
 By default, the value of this parameter is zero, which means that no N-gram restrictions apply.
+
+### `can_stop_early`: bool (optional, default=false)
+
+If `true` then the model may generate less than [generated_tokens_count](#generated_tokens_count-int-required).
+For example, when the model decides that the story it generated is ended.
+If `false` the model will be instructed to not stop generating text
+until all `generated_tokens_count` tokens are generated
+or until any of the [stop strings](#stop_strings-string-optional) are encountered.
 
 
 ## API response
