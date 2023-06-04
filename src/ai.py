@@ -12,7 +12,6 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAn
 from transformers import GenerationConfig, LogitsProcessorList, StoppingCriteriaList
 from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer
 
-import dev_map
 import logits_warper_override as lwo
 import tokenizer as tok
 import tools
@@ -124,31 +123,39 @@ class ModelPrecision(Enum):
     GPTQ8 = "gptq8"
 
 
-def load_config(
-    model_path: str,
-    model_revision: str | None = None,
+@dataclass
+class ModelPathOptions:
+    name_or_dir: str
+    revision: str | None = None
     cache_dir: str | None = None
-) -> PretrainedConfig:
+    basename: str | None = None
+
+
+@dataclass
+class ModelLoadOptions:
+    precision: ModelPrecision = ModelPrecision.FLOAT16
+    group_size: int = 128
+    true_sequential: bool = True
+    use_safetensors: bool = True
+    device_map: DeviceMap | None = None
+    gpu_device: int | None = None
+
+
+def load_config(path_options: ModelPathOptions) -> PretrainedConfig:
     cfg = AutoConfig.from_pretrained(
-        model_path,
-        revision=model_revision,
-        cache_dir=cache_dir,
+        path_options.name_or_dir,
+        revision=path_options.revision,
+        cache_dir=path_options.cache_dir,
         gradient_checkpointing=None
     )
     return cfg
 
 
 def load_gptq_model(
-    path: str,
-    device_map: DeviceMap | None,
-    precision: ModelPrecision,
-    group_size: int,
-    model_basename: str | None,
-    true_sequential: bool,
-    gpu_device: int | None,
-    use_safetensors: bool = True
+    path_options: ModelPathOptions,
+    load_options: ModelLoadOptions
 ) -> BaseGPTQForCausalLM | None:
-    match precision:
+    match load_options.precision:
         case ModelPrecision.GPTQ2:
             bits = 2
 
@@ -163,50 +170,31 @@ def load_gptq_model(
 
     quantize_config = BaseQuantizeConfig(
         bits=bits,
-        group_size=group_size,
-        true_sequential=true_sequential
+        group_size=load_options.group_size,
+        true_sequential=load_options.true_sequential
     )
-    if not dev_map.is_all_on_gpu(device_map):
-        raise NotImplementedError("Offloading to CPU is not supported for GPTQ")
-    device_str = f"cuda:{gpu_device}"
+    device_str = f"cuda:{load_options.gpu_device}" if load_options.gpu_device is not None else "cpu"
     model = AutoGPTQForCausalLM.from_quantized(
-        path,
+        path_options.name_or_dir,
         device=device_str,
-        use_safetensors=use_safetensors,
+        use_safetensors=load_options.use_safetensors,
         quantize_config=quantize_config,
-        model_basename=model_basename,
+        model_basename=path_options.basename,
         use_triton=True,
-        device_map=device_map
+        device_map=load_options.device_map
     )
     return model
 
 
 def load_model(
-    path: str,
-    revision: str | None = None,
-    cache_dir: str | None = None,
-    device_map: DeviceMap | None = None,
-    precision: ModelPrecision = ModelPrecision.FLOAT16,
-    group_size: int = 128,
-    model_basename: str | None = None,
-    true_sequential: bool = True,
-    gpu_device: int | None = 0,
-    use_safetensors: bool = True
+    path_options: ModelPathOptions,
+    load_options: ModelLoadOptions
 ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
     args = {}
 
-    model = load_gptq_model(
-        path=path,
-        device_map=device_map,
-        precision=precision,
-        group_size=group_size,
-        model_basename=model_basename,
-        true_sequential=true_sequential,
-        gpu_device=gpu_device,
-        use_safetensors=use_safetensors
-    )
+    model = load_gptq_model(path_options, load_options)
     if model is None:
-        match precision:
+        match load_options.precision:
             case ModelPrecision.ORIGINAL:
                 pass
 
@@ -225,18 +213,18 @@ def load_model(
                 )
 
         model = AutoModelForCausalLM.from_pretrained(
-            path,
-            revision=revision,
+            path_options.name_or_dir,
+            revision=path_options.revision,
             low_cpu_mem_usage=True,
-            cache_dir=cache_dir,
-            device_map=device_map,
+            cache_dir=path_options.cache_dir,
+            device_map=load_options.device_map,
             **args
         )
         model.__actual_model = model
     else:
         model.__actual_model = model.model
 
-    tokenizer = AutoTokenizer.from_pretrained(path)
+    tokenizer = AutoTokenizer.from_pretrained(path_options.name_or_dir)
     tok.add_break_token(tokenizer, model.__actual_model)
 
     return model, tokenizer

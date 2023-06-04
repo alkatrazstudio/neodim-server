@@ -19,6 +19,7 @@ class DeviceMapInfo(TypedDict):
 
 DeviceMap = dict[str, str | int]
 DEVICE_CPU: Final[str] = "cpu"
+AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
 DEVICE_MAP_TEMPLATES: Final[dict[ModelType, DeviceMapInfo]] = {
@@ -150,3 +151,22 @@ def build(model_type: ModelType, layers_count: int, gpu_layers: list[int]) -> De
 def is_all_on_gpu(device_map: DeviceMap) -> bool:
     is_gpu_only = all(val != DEVICE_CPU for val in device_map.values())
     return is_gpu_only
+
+
+def parse_layers(layers_distribution: list[int | str] | None, layers_count: int) -> list[int]:
+    if layers_distribution is None:
+        return [1]
+
+    explicit_count = 0
+    for layer_spec in layers_distribution:
+        if layer_spec != AVAILABLE_LAYERS_CHAR:
+            explicit_count += int(layer_spec)
+    available_count = layers_count - explicit_count
+
+    layers = [
+        int(layer_spec)
+        if layer_spec != AVAILABLE_LAYERS_CHAR
+        else available_count
+        for layer_spec in layers_distribution
+    ]
+    return layers

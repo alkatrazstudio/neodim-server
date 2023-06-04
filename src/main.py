@@ -4,7 +4,6 @@
 import argparse
 import time
 from argparse import Namespace
-from typing import Final
 
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -13,11 +12,8 @@ import ai
 import dev_map
 import server
 import tools
-from ai import GeneratedOutput, ModelPrecision
+from ai import GeneratedOutput, ModelLoadOptions, ModelPathOptions, ModelPrecision
 from server import Callback, ServerRequestData
-
-
-AVAILABLE_LAYERS_CHAR: Final[str] = "a"
 
 
 def get_request_callback(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, gpu_device: int | None) -> Callback:
@@ -74,48 +70,26 @@ def print_gpu_info() -> None:
     print()
 
 
-def parse_layers(layers_distribution: list[int | str] | None, layers_count: int) -> list[int]:
-    if layers_distribution is None:
-        return [1]
+def load_model(args: Namespace) -> tuple[PreTrainedModel, PreTrainedTokenizer, int | None]:
+    path_options = ModelPathOptions(
+        name_or_dir=args.model,
+        revision=args.model_revision,
+        cache_dir=args.cache_dir,
+        basename=args.model_basename
+    )
 
-    explicit_count = 0
-    for layer_spec in layers_distribution:
-        if layer_spec != AVAILABLE_LAYERS_CHAR:
-            explicit_count += int(layer_spec)
-    available_count = layers_count - explicit_count
-
-    layers = [
-        int(layer_spec)
-        if layer_spec != AVAILABLE_LAYERS_CHAR
-        else available_count
-        for layer_spec in layers_distribution
-    ]
-    return layers
-
-
-def load_model(
-    path: str,
-    revision: str | None = None,
-    precision: ModelPrecision = ModelPrecision.FLOAT16,
-    cache_dir: str | None = None,
-    layers_distribution: list[int | str] | None = None,
-    group_size: int = 128,
-    model_basename: str | None = None,
-    true_sequential: bool = True,
-    use_safetensors: bool = True
-) -> tuple[PreTrainedModel, PreTrainedTokenizer, int | None]:
-    if not revision:
-        print(f"Loading the model: {path}")
+    if not path_options.revision:
+        print(f"Loading the model: {path_options.name_or_dir}")
     else:
-        print(f"Loading the model: {path} ({revision})")
+        print(f"Loading the model: {path_options.name_or_dir} ({path_options.revision})")
 
     t_start = time.time()
 
-    config = ai.load_config(path, revision, cache_dir)
+    config = ai.load_config(path_options)
     model_type = tools.model_type(config)
 
     layers_count = tools.num_layers(config)
-    layers = parse_layers(layers_distribution, layers_count)
+    layers = dev_map.parse_layers(args.layer_strs, layers_count)
     layers_str = ", ".join(f"GPU_{device_index}={layer}" for device_index, layer in enumerate(layers) if layer > 0)
     gpu_layers_count = sum(layers)
     cpu_layers_count = layers_count - gpu_layers_count
@@ -130,17 +104,18 @@ def load_model(
     else:
         gpu_device = None
 
-    model, tokenizer = ai.load_model(
-        path=path,
-        revision=revision,
-        cache_dir=cache_dir,
+    load_options = ModelLoadOptions(
+        precision=args.precision,
+        group_size=args.group_size,
+        true_sequential=args.true_sequential,
+        use_safetensors=args.safetensors,
         device_map=device_map,
-        precision=precision,
-        model_basename=model_basename,
-        group_size=group_size,
-        true_sequential=true_sequential,
-        gpu_device=gpu_device,
-        use_safetensors=use_safetensors
+        gpu_device=gpu_device
+    )
+
+    model, tokenizer = ai.load_model(
+        path_options=path_options,
+        load_options=load_options
     )
 
     t_elapsed = round(time.time() - t_start)
@@ -264,17 +239,7 @@ def main() -> None:
         raise RuntimeError("--model is missing")
 
     print_gpu_info()
-    model, tokenizer, gpu_device = load_model(
-        path=args.model,
-        revision=args.model_revision,
-        precision=args.precision,
-        cache_dir=args.cache_dir,
-        layers_distribution=args.layer_strs,
-        model_basename=args.model_basename,
-        group_size=args.group_size,
-        true_sequential=args.true_sequential,
-        use_safetensors=args.safetensors
-    )
+    model, tokenizer, gpu_device = load_model(args)
     run_ai_server(model, tokenizer, gpu_device, args.listen_address, args.listen_port)
 
 
