@@ -115,13 +115,14 @@ All CLI options and parameters are explained below.
 Here is another example:
 ```sh
 # WARNING: this may download up to 13GB of data
-neodim-server/start.sh --model=EleutherAI/gpt-j-6B --model-revision=float16 --listen-address=0.0.0.0
+neodim-server/start.sh --model=EleutherAI/gpt-j-6B --model-revision=float16 --listen-address=0.0.0.0 --layers=14
 ```
 It will use the official [GPT-J-6B](https://huggingface.co/EleutherAI/gpt-j-6B) model
 by [EleutherAI](https://www.eleuther.ai)
 from the [`float16` branch](https://huggingface.co/EleutherAI/gpt-j-6B/tree/float16).
 The server will also listen on all network interfaces (`--listen-address=0.0.0.0`)
 which allows any external client to connect to the server.
+It will also only load half of the model to the GPU, and the rest will be on the CPU.
 
 If you have `curl` installed you can try to manually send an HTTP request:
 ```sh
@@ -282,7 +283,7 @@ Listen on this IP address.
 
 Listen on this port.
 
-### `layers`: (int|"a")[] (optional, default=1)
+### `layers`: (int|"a")[] (optional, default="a")
 
 Distribute model's layers on GPUs.
 

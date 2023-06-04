@@ -193,8 +193,8 @@ def parse_args() -> Namespace:
                         default="8787")
     parser.add_argument("--layers",
                         help="Distribute model's layers between GPUs (pass 0 to not use GPUs). "
-                             "Default: 1",
-                        default="1")
+                             f"Default: {dev_map.AVAILABLE_LAYERS_CHAR}",
+                        default=dev_map.AVAILABLE_LAYERS_CHAR)
     parser.add_argument("--precision",
                         help=f"Load the model in this precision ({', '.join([x.value for x in ModelPrecision])}). "
                              f"Default: {ModelPrecision.FLOAT16.value}",
