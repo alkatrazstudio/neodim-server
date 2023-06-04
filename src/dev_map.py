@@ -4,6 +4,10 @@
 from enum import Enum
 from typing import Final, TypedDict
 
+from transformers import PretrainedConfig
+
+import ai
+import tools
 from tools import ModelType
 
 
@@ -170,3 +174,24 @@ def parse_layers(layers_distribution: list[int | str] | None, layers_count: int)
         for layer_spec in layers_distribution
     ]
     return layers
+
+
+def find_first_gpu_device(device_map: DeviceMap | None) -> int | None:
+    if device_map is None:
+        return None
+    for layer_val in device_map.values():
+        if isinstance(layer_val, int):
+            return layer_val
+    return None
+
+
+def by_layers(
+    config: PretrainedConfig,
+    layers_distribution: list[int | str]
+) -> tuple[DeviceMap | None, int | None]:
+    model_type = tools.model_type(config)
+    layers_count = tools.num_layers(config)
+    layers = parse_layers(layers_distribution, layers_count)
+    device_map = build(model_type, layers_count, layers)
+    gpu_device = find_first_gpu_device(device_map)
+    return device_map, gpu_device

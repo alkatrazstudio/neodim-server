@@ -99,10 +99,7 @@ def load_model(args: Namespace) -> tuple[PreTrainedModel, PreTrainedTokenizer, i
     gpus_count = len([x for x in layers if x])
 
     device_map = dev_map.build(model_type, layers_count, layers)
-    if device_map is not None:
-        gpu_device = next(i for i, layer in enumerate(layers) if layer > 0)
-    else:
-        gpu_device = None
+    gpu_device = dev_map.find_first_gpu_device(device_map)
 
     load_options = ModelLoadOptions(
         precision=args.precision,
