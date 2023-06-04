@@ -110,7 +110,9 @@ def load_model(args: Namespace) -> tuple[PreTrainedModel, PreTrainedTokenizer, i
         true_sequential=args.true_sequential,
         use_safetensors=args.safetensors,
         device_map=device_map,
-        gpu_device=gpu_device
+        gpu_device=gpu_device,
+        inject_fused_attention=args.fused_attention,
+        inject_fused_mlp=args.fused_mlp
     )
 
     model, tokenizer = ai.load_model(
@@ -214,6 +216,16 @@ def parse_args() -> Namespace:
                              "Currently only supported for GPTQ precisions. "
                              "Default: true",
                         default="true")
+    parser.add_argument("--fused-attention",
+                        help="Inject fused attention. "
+                             "Currently only supported for GPTQ precisions. "
+                             "Default: false",
+                        default="false")
+    parser.add_argument("--fused-mlp",
+                        help="Inject fused MLP. "
+                             "Currently only supported for GPTQ precisions. "
+                             "Default: false",
+                        default="false")
     parser.add_argument("--version",
                         help="Show the version of this Neodim Server",
                         action="store_true")
@@ -225,6 +237,8 @@ def parse_args() -> Namespace:
     args.group_size = int(args.group_size)
     args.true_sequential = args.true_sequential == "true"
     args.safetensors = args.safetensors == "true"
+    args.fused_attention = args.fused_attention == "true"
+    args.fused_mlp = args.fused_mlp == "true"
     return args
 
 

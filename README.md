@@ -360,6 +360,9 @@ To load GPTQ models you need to specify additional parameters to CLI:
 [--true-sequential](#true-sequential-truefalse-optional-defaulttrue)
 and [--safetensors](#safetensors-truefalse-optional-defaulttrue).
 The last three already have popular defaults, so most of the time you only need to specify `--model-basename`.
+There are also some additional parameters that can influence the model behavior:
+[--fused-attention](#fused-attention-truefalse-optional-defaultfalse)
+and [--fused-mlp](#fused-mlp-truefalse-optional-defaultfalse).
 
 Current limitations and gotchas:
 
@@ -402,6 +405,18 @@ This value is usually mentioned in the description of the model.
 
 Whether to load [GPTQ](#gptq) model in `safetensors` format.
 If `false`, then the `*.bin` or `*.pt` file will be loaded.
+
+### `fused-attention`: true|false (optional, default=false)
+
+Inject fused attention.
+Only applicable to [GPTQ](#gptq) models, but may not be incompatible with sdome of them.
+May increase the inference speed at the cost of higher VRAM usage.
+
+### `fused-mlp`: true|false (optional, default=false)
+
+Inject fused MLP.
+Only applicable to [GPTQ](#gptq) models, but may not be incompatible with sdome of them.
+May increase the inference speed at the cost of higher VRAM usage.
 
 
 ## Prompt and preamble

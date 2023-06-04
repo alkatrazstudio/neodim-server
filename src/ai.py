@@ -139,6 +139,8 @@ class ModelLoadOptions:
     use_safetensors: bool = True
     device_map: DeviceMap | None = None
     gpu_device: int | None = None
+    inject_fused_attention: bool = False
+    inject_fused_mlp: bool = False
 
 
 def load_config(path_options: ModelPathOptions) -> PretrainedConfig:
@@ -181,7 +183,9 @@ def load_gptq_model(
         quantize_config=quantize_config,
         model_basename=path_options.basename,
         use_triton=True,
-        device_map=load_options.device_map
+        device_map=load_options.device_map,
+        inject_fused_attention=load_options.inject_fused_attention,
+        inject_fused_mlp=load_options.inject_fused_mlp
     )
     return model
 
