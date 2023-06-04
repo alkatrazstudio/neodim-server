@@ -363,17 +363,19 @@ The last three already have popular defaults, so most of the time you only need 
 
 Current limitations and gotchas:
 
-* All model layers must be on GPUs, i.e. you need something like `--layers=a`.
-* Loading directly from HuggingFace Hub is not supported, i.e. you can only specify a local folder for `--model`.
 * Some models may not load, it depends on how they were quantized.
 * `--precision=gptq8` is different from `--precision=int8` - models of these precisions are not compatible with each other.
 * `--precision=int8` can quantize the model on fly, i.e. you can load float16 model in INT8 precision. GPTQ models, on the other hand, need to be quantized beforehand.
-* You will need `tokenizer.json` for GPTQ models,
-otherwise they will be very slow.
+* You will need `tokenizer.json` for GPTQ models, otherwise they will be very slow.
 
 Example that shows how to load the abovementioned model:
 ```sh
-./start.sh --model=/opt/models/vicuna-13B-1.1-GPTQ-4bit-128g --listen-address=0.0.0.0 --layers=a --precision=gptq4 --model-basename=vicuna-13B-1.1-GPTQ-4bit-128g.latest
+./start.sh --model=/opt/models/vicuna-13B-1.1-GPTQ-4bit-128g --precision=gptq4 --model-basename=vicuna-13B-1.1-GPTQ-4bit-128g.latest
+```
+
+You can also load GPTQ models directly from the HuggingFace Hub:
+```sh
+./start.sh --model Neko-Institute-of-Science/LLaMA-7B-4bit-128g --precision=gptq4 --model-basename=llama-7b-4bit-128g
 ```
 
 ### `model-basename`: string (optional)
