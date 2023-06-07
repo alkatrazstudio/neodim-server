@@ -5,7 +5,7 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Final
+from typing import Final, Optional
 
 import jsons
 from packaging.specifiers import SpecifierSet
@@ -16,7 +16,7 @@ from ai import GeneratedOutput, RequestData
 
 @dataclass
 class ServerRequestData(RequestData):
-    required_server_version: str | None = None
+    required_server_version: Optional[str] = None
 
 
 Callback = Callable[[ServerRequestData], GeneratedOutput]

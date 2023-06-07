@@ -4,6 +4,7 @@
 import copy
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 import torch
 from auto_gptq.modeling import BaseGPTQForCausalLM
@@ -24,36 +25,38 @@ from stop_tokens_criteria import StopStringsType, StopTokensCriteria
 from tokenizer import TokenizerResult
 
 
+# cannot use the modern union syntax:
+# https://github.com/ramonhagenaars/jsons/issues/162
 @dataclass
 class RequestData:
     prompt: str
     generated_tokens_count: int
     max_total_tokens: int
     preamble: str = ""
-    stop_strings: list[str] | None = None
+    stop_strings: Optional[list[str]] = None
     stop_strings_type: StopStringsType = StopStringsType.STRING
     stop_strings_required_matches_count: int = 1
-    truncate_prompt_until: list[str] | None = None
-    gpu_device: int | None = 0
-    repetition_penalty: float | None = None
-    repetition_penalty_range: int | None = None
-    repetition_penalty_slope: float | None = None
+    truncate_prompt_until: Optional[list[str]] = None
+    gpu_device: Optional[int] = 0
+    repetition_penalty: Optional[float] = None
+    repetition_penalty_range: Optional[int] = None
+    repetition_penalty_slope: Optional[float] = None
     repetition_penalty_include_preamble: bool = False
     repetition_penalty_include_generated: RepPenGenerated = RepPenGenerated.SLIDE
     repetition_penalty_truncate_to_input: bool = False
-    repetition_penalty_prompt: str | None = None
-    temperature: float | None = None
-    top_p: float | None = None
-    top_k: int | None = None
-    tfs: float | None = None
-    typical: float | None = None
-    top_a: float | None = None
-    penalty_alpha: float | None = None
-    warpers_order: list[WarperId] | None = None
+    repetition_penalty_prompt: Optional[str] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    tfs: Optional[float] = None
+    typical: Optional[float] = None
+    top_a: Optional[float] = None
+    penalty_alpha: Optional[float] = None
+    warpers_order: Optional[list[WarperId]] = None
     sequences_count: int = 1
-    words_whitelist: list[str] | None = None
-    words_blacklist: list[str] | None = None
-    no_repeat_ngram_size: int | None = None
+    words_whitelist: Optional[list[str]] = None
+    words_blacklist: Optional[list[str]] = None
+    no_repeat_ngram_size: Optional[int] = None
     can_stop_early: bool = False
 
     def __post_init__(self):
