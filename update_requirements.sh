@@ -18,7 +18,7 @@ source pip.env
 set +a
 
 pip install -r requirements_direct.txt
-echo "--extra-index-url https://download.pytorch.org/whl/cu117" > requirements.txt
+echo "--extra-index-url https://download.pytorch.org/whl/cu118" > requirements.txt
 pip freeze >> requirements.txt
 
 REQ_HASH=($(cat pip.env requirements.txt | md5sum))

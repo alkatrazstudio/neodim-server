@@ -81,7 +81,7 @@ Neodim Server also lacks a lot of sanity checks and is not foolproof to use.
 
 ## Requirements
 
-* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), supporting at least CUDA v11.7.
+* CUDA-enabled GPU (e.g. any NVIDIA GTX/RTX), supporting at least CUDA v11.8.
 * Appropriate amount of free VRAM (e.g., at least 5GB of free VRAM for `GPT-J-6B` model)
 * Appropriate amount or free RAM (e.g., at least 15GB of free RAM for `GPT-J-6B` model)
 * Python 3.9+ (check with `python3 --version`)
@@ -340,7 +340,7 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
    There are several ways to do it:
    - On Ubuntu: `sudo apt install nvidia-cuda-toolkit`
    - The official NVIDIA page: https://developer.nvidia.com/cuda-downloads
-   - [Conda](https://docs.conda.io/): `conda install cudatoolkit`
+   - [Conda](https://docs.conda.io/): `conda install -c nvidia/label/cuda-<cuda version> cuda`
 2. CPU-layers won't be converted to 8-bit.
 3. You can load 8-bit models directly, but you still need to specify `--precision=int8`.
    Also, in this case all layers must be on GPU, e.g. `--layers=a`.
