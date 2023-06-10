@@ -6,3 +6,7 @@ jsons
 regex
 packaging
 auto-gptq[triton]
+
+# needed for bitsandbytes
+# https://github.com/TimDettmers/bitsandbytes/issues/426
+scipy
