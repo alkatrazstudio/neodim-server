@@ -120,10 +120,16 @@ class ModelPrecision(Enum):
     ORIGINAL = "original"
     FLOAT32 = "float32"
     FLOAT16 = "float16"
+    FLOAT4 = "float4"
     INT8 = "int8"
     GPTQ2 = "gptq2"
     GPTQ4 = "gptq4"
     GPTQ8 = "gptq8"
+
+
+class QuantizationType(Enum):
+    FP4 = "fp4"
+    NF4 = "nf4"
 
 
 @dataclass
@@ -144,6 +150,8 @@ class ModelLoadOptions:
     gpu_device: int | None = None
     inject_fused_attention: bool = False
     inject_fused_mlp: bool = False
+    quantization_type: QuantizationType = QuantizationType.NF4
+    double_quantization: bool = True
 
 
 def load_config(path_options: ModelPathOptions) -> PretrainedConfig:
@@ -217,6 +225,16 @@ def load_model(
                     load_in_8bit=True,
                     llm_int8_enable_fp32_cpu_offload=True,
                     llm_int8_skip_modules=["lm_head"]
+                )
+
+            case ModelPrecision.FLOAT4:
+                args["torch_dtype"] = torch.bfloat16
+                args["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    llm_int8_enable_fp32_cpu_offload=True,
+                    bnb_4bit_quant_type=load_options.quantization_type.value,
+                    bnb_4bit_use_double_quant=load_options.double_quantization,
+                    bnb_4bit_compute_dtype=torch.bfloat16
                 )
 
         model = AutoModelForCausalLM.from_pretrained(

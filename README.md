@@ -115,11 +115,12 @@ All CLI options and parameters are explained below.
 Here is another example:
 ```sh
 # WARNING: this may download up to 13GB of data
-neodim-server/start.sh --model=EleutherAI/gpt-j-6B --model-revision=float16 --listen-address=0.0.0.0 --layers=14
+neodim-server/start.sh --model=EleutherAI/gpt-j-6B --model-revision=float16 --listen-address=0.0.0.0 --layers=14 --precision=float4
 ```
 It will use the official [GPT-J-6B](https://huggingface.co/EleutherAI/gpt-j-6B) model
 by [EleutherAI](https://www.eleuther.ai)
 from the [`float16` branch](https://huggingface.co/EleutherAI/gpt-j-6B/tree/float16).
+Then it will be dynamically converted to 4-bit float to reduce VRAM usage.
 The server will also listen on all network interfaces (`--listen-address=0.0.0.0`)
 which allows any external client to connect to the server.
 It will also only load half of the model to the GPU, and the rest will be on the CPU.
@@ -313,7 +314,7 @@ and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`)
 or put all layers on a single GPU (e.g. `--layers=a`, `--layers=0,a` etc.).
 
-### `precision`: original|float32|float16|int8|gptq2|gptq4|gptq8 (optional, default=float16)
+### `precision`: original|float32|float16|float4|int8|gptq2|gptq4|gptq8 (optional, default=float16)
 
 Neodim Server can load 16-bit and 32-bit models,
 but using this parameter the model can be load in memory with a specified precision.
@@ -327,6 +328,9 @@ This allows to seek balance between VRAM consumption and the quality of the gene
 * `int8` - 8-bit integer precision.
   Compared to `float16`, loading the model in `int8` may lower the quality of the generated text,
   but the model will consume around 1.5 times less VRAM.
+* `float4` - 4-bit float precision.
+  Compared to `int8`, loading the model in `float4` may lower the quality of the generated text,
+  but the model will consume around 1.5 times less VRAM.
 * `gptq2`, `gptq4`, `gptq8` - [read below](#gptq)
 * `original` - use the original precision of the model.
 
@@ -334,7 +338,7 @@ It only makes sense to downgrade the model's precision.
 For example, if you load 16-bit model in 32-bit precision mode
 then it will consume twice as much VRAM, but it won't improve the quality of the generated text.
 
-#### **Notes about the 8-bit precision:**
+#### **INT8**
 
 1. You need to install CUDA Toolkit.
    There are several ways to do it:
@@ -345,6 +349,14 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
 3. You can load 8-bit models directly, but you still need to specify `--precision=int8`.
    Also, in this case all layers must be on GPU, e.g. `--layers=a`.
 4. Some models may fail to load completely.
+
+#### **FLOAT4**
+
+The above notes apply to `float4` precision as well.
+
+Also, when using `--precision=float4` the following additional CLI parameters are available:
+[--quantization-type](#quantization-type-fp4nf4-optional-defaultnf4)
+and [--double-quantization](#double-quantization-truefalse-optional-defaulttrue).
 
 #### **GPTQ**
 
@@ -368,8 +380,9 @@ and [--fused-mlp](#fused-mlp-truefalse-optional-defaultfalse).
 Current limitations and gotchas:
 
 * Some models may not load, it depends on how they were quantized.
-* `--precision=gptq8` is different from `--precision=int8` - models of these precisions are not compatible with each other.
-* `--precision=int8` can quantize the model on fly, i.e. you can load float16 model in INT8 precision. GPTQ models, on the other hand, need to be quantized beforehand.
+* `--precision=gptq8` is different from `--precision=int8`,
+  and `--precision=gptq4` is different from `--precision=float4` - GPTQ uses a different quantization algorithms, so it's not possible to load a GPTQ model with `int8` and `float4` precisions, and vice versa.
+* `--precision=int8` and `--precision=float4` can quantize the model on fly, i.e. you can load float16 model in INT8 precision. GPTQ models, on the other hand, need to be quantized beforehand.
 * You will need `tokenizer.json` for GPTQ models, otherwise they will be very slow.
 
 Example that shows how to load the abovementioned model:
@@ -410,14 +423,28 @@ If `false`, then the `*.bin` or `*.pt` file will be loaded.
 ### `fused-attention`: true|false (optional, default=false)
 
 Inject fused attention.
-Only applicable to [GPTQ](#gptq) models, but may not be incompatible with sdome of them.
+Only applicable to [GPTQ](#gptq) models, but may not be incompatible with some of them.
 May increase the inference speed at the cost of higher VRAM usage.
 
 ### `fused-mlp`: true|false (optional, default=false)
 
 Inject fused MLP.
-Only applicable to [GPTQ](#gptq) models, but may not be incompatible with sdome of them.
+Only applicable to [GPTQ](#gptq) models, but may not be incompatible with some of them.
 May increase the inference speed at the cost of higher VRAM usage.
+
+### `quantization-type`: fp4|nf4 (optional, default=nf4)
+
+Use [4-bit floating point](https://huggingface.co/blog/4bit-transformers-bitsandbytes#fp4-precision-in-a-few-words) (`fp4`)
+or [4-bit NormalFloat](https://arxiv.org/abs/2305.14314) (`nf4`)
+when performing the quantization.
+This mayt affect the quality of the generated text.
+Only applicable to `float4` precision.
+
+### `double-quantization`: true|false (optional, default=true)
+
+Perform double quantization.
+Disabling it will reduce the VRAM consumption by approximately 10%,
+but may lower the quality of the generated text.
 
 
 ## Prompt and preamble
@@ -1144,10 +1171,12 @@ Play around with `--layers` parameter to find a suitable combination.
 ### Lowering the precision
 
 By default, the model is loaded in 16-bit floating precision.
-However, it's possible to try to load the model in 8-bit precision.
-This may lower the quality of the generated text, but the model will consume only half as much VRAM.
-There are limitations when loading the model in 8-bit precision.
-See more details in [precision](#precision-originalfloat32float16int8-optional-defaultfloat16) parameter description.
+However, it's possible to try to load the model in 8-bit or 4-bit precision.
+This may lower the quality of the generated text, but the model will consume only half/quarter as much VRAM.
+There are limitations when loading the model in 8-bit or 4-bit precision.
+See more details in
+[precision](#precision-originalfloat32float16float4int8gptq2gptq4gptq8-optional-defaultfloat16)
+parameter description.
 
 
 ### Using GPTQ models

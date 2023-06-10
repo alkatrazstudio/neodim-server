@@ -12,7 +12,7 @@ import ai
 import dev_map
 import server
 import tools
-from ai import GeneratedOutput, ModelLoadOptions, ModelPathOptions, ModelPrecision
+from ai import GeneratedOutput, ModelLoadOptions, ModelPathOptions, ModelPrecision, QuantizationType
 from server import Callback, ServerRequestData
 
 
@@ -109,7 +109,9 @@ def load_model(args: Namespace) -> tuple[PreTrainedModel, PreTrainedTokenizer, i
         device_map=device_map,
         gpu_device=gpu_device,
         inject_fused_attention=args.fused_attention,
-        inject_fused_mlp=args.fused_mlp
+        inject_fused_mlp=args.fused_mlp,
+        quantization_type=args.quantization_type,
+        double_quantization=args.double_quantization
     )
 
     model, tokenizer = ai.load_model(
@@ -223,6 +225,16 @@ def parse_args() -> Namespace:
                              "Currently only supported for GPTQ precisions. "
                              "Default: false",
                         default="false")
+    parser.add_argument("--quantization-type",
+                        help=f"Quantization type ({', '.join([x.value for x in QuantizationType])}). "
+                             "Currently only suported for float4 precision. "
+                             f"Default: {QuantizationType.NF4.value}",
+                        default=QuantizationType.NF4)
+    parser.add_argument("--double-quantization",
+                        help="Use double quantization. "
+                             "Currently only supported for float4 precision. "
+                             "Default: true",
+                        default="true")
     parser.add_argument("--version",
                         help="Show the version of this Neodim Server",
                         action="store_true")
@@ -236,6 +248,8 @@ def parse_args() -> Namespace:
     args.safetensors = args.safetensors == "true"
     args.fused_attention = args.fused_attention == "true"
     args.fused_mlp = args.fused_mlp == "true"
+    args.quantization_type = QuantizationType(args.quantization_type)
+    args.double_quantization = args.double_quantization == "true"
     return args
 
 
