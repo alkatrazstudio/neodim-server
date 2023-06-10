@@ -1,12 +1,8 @@
 --extra-index-url https://download.pytorch.org/whl/cu118
-transformers
+transformers[torch,sentencepiece]
 torch
-sentencepiece
-protobuf
-accelerate
 bitsandbytes
 jsons
 regex
 packaging
-safetensors
 auto-gptq[triton]

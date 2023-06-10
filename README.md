@@ -1164,14 +1164,10 @@ Read more [here](src/third_party/THIRD_PARTY.md).
 Other direct dependencies:
 * [transformers](https://pypi.org/project/transformers/)
 * [torch](https://pypi.org/project/torch/)
-* [sentencepiece](https://pypi.org/project/sentencepiece/)
-* [protobuf](https://pypi.org/project/protobuf/)
-* [accelerate](https://pypi.org/project/accelerate/)
 * [bitsandbytes](https://pypi.org/project/bitsandbytes/)
 * [jsons](https://pypi.org/project/jsons/)
 * [regex](https://pypi.org/project/regex/)
 * [packaging](https://pypi.org/project/packaging/)
-* [safetensors](https://pypi.org/project/safetensors/)
 * [auto-gptq](https://pypi.org/project/auto-gptq/)
 
 
