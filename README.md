@@ -344,8 +344,7 @@ then it will consume twice as much VRAM, but it won't improve the quality of the
 2. CPU-layers won't be converted to 8-bit.
 3. You can load 8-bit models directly, but you still need to specify `--precision=int8`.
    Also, in this case all layers must be on GPU, e.g. `--layers=a`.
-4. Only NVIDIA RTX 20xx or later are supported.
-5. Some models may fail to load completely.
+4. Some models may fail to load completely.
 
 #### **GPTQ**
 
