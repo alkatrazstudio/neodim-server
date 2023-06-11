@@ -1,6 +1,18 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.12 (June 11, 2023)
+
+- Added: support for [GPTQ](README.md#gptq) models.
+- Added: support for `float4` [precision](README.md#precision-originalfloat32float16float4int8gptq2gptq4gptq8-optional-defaultfloat16)
+- Added: [can_stop_early](README.md#can_stop_early-bool-optional-defaultfalse) parameter
+- Changed: switching to CUDA 11.8
+- Changed: all layers are distributed on the first GPU by default
+  (if [--layers](README.md#layers-inta-optional-defaulta) is not specified)
+- Improved: `int8` precision is now supported on all GPUs supported by Neodim Server
+- Improved: blacklist processing
+
+
 ## v0.11 (April 23, 2023)
 
 - Added: [no_repeat_ngram_size](README.md#no_repeat_ngram_size-int-optional) parameter

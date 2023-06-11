@@ -24,7 +24,7 @@ Callback = Callable[[ServerRequestData], GeneratedOutput]
 
 ENDPOINT_PATH: Final[str] = "/generate"
 SERVER_NAME: Final[str] = "Neodim Server"
-SERVER_VERSION: Final[Version] = Version("0.11")
+SERVER_VERSION: Final[Version] = Version("0.12")
 
 
 def name_and_version():
