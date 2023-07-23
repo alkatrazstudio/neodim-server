@@ -196,8 +196,8 @@ def parse_args() -> Namespace:
                         default=dev_map.AVAILABLE_LAYERS_CHAR)
     parser.add_argument("--precision",
                         help=f"Load the model in this precision ({', '.join([x.value for x in ModelPrecision])}). "
-                             f"Default: {ModelPrecision.FLOAT16.value}",
-                        default=ModelPrecision.FLOAT16)
+                             f"Default: {ModelPrecision.ORIGINAL.value}",
+                        default=ModelPrecision.ORIGINAL)
     parser.add_argument("--model-basename",
                         help="Filename without extension of the model "
                              "Currently only supported for GPTQ precisions.")

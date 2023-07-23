@@ -144,7 +144,7 @@ class ModelPathOptions:
 
 @dataclass
 class ModelLoadOptions:
-    precision: ModelPrecision = ModelPrecision.FLOAT16
+    precision: ModelPrecision = ModelPrecision.ORIGINAL
     group_size: int = 128
     true_sequential: bool = True
     use_safetensors: bool = True
@@ -170,24 +170,38 @@ def load_gptq_model(
     path_options: ModelPathOptions,
     load_options: ModelLoadOptions
 ) -> BaseGPTQForCausalLM | None:
-    match load_options.precision:
-        case ModelPrecision.GPTQ2:
-            bits = 2
+    quantize_config = None
+    if load_options.precision == ModelPrecision.ORIGINAL:
+        try:
+            quantize_config = BaseQuantizeConfig.from_pretrained(path_options.name_or_dir)
+        except:
+            quantize_config = None
 
-        case ModelPrecision.GPTQ4:
-            bits = 4
+    if not quantize_config:
+        match load_options.precision:
+            case ModelPrecision.GPTQ2:
+                bits = 2
 
-        case ModelPrecision.GPTQ8:
-            bits = 8
+            case ModelPrecision.GPTQ4:
+                bits = 4
 
-        case _:
-            return None
+            case ModelPrecision.GPTQ8:
+                bits = 8
 
-    quantize_config = BaseQuantizeConfig(
-        bits=bits,
-        group_size=load_options.group_size,
-        true_sequential=load_options.true_sequential
-    )
+            case _:
+                return None
+    else:
+        bits = quantize_config.bits
+        if bits not in [2, 4, 8]:
+            raise RuntimeError(f"{bits}-bit GPTQ models are not supported")
+
+    if not quantize_config:
+        quantize_config = BaseQuantizeConfig(
+            bits=bits,
+            group_size=load_options.group_size,
+            true_sequential=load_options.true_sequential
+        )
+
     device_str = f"cuda:{load_options.gpu_device}" if load_options.gpu_device is not None else "cpu"
     model = AutoGPTQForCausalLM.from_quantized(
         path_options.name_or_dir,

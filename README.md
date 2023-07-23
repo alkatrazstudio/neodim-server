@@ -314,14 +314,13 @@ and the more VRAM it will use.
 You can also put all layers on CPU (`--layers=0`)
 or put all layers on a single GPU (e.g. `--layers=a`, `--layers=0,a` etc.).
 
-### `precision`: original|float32|float16|float4|int8|gptq2|gptq4|gptq8 (optional, default=float16)
+### `precision`: original|float32|float16|float4|int8|gptq2|gptq4|gptq8 (optional, default=original)
 
 Neodim Server can load 16-bit and 32-bit models,
 but using this parameter the model can be load in memory with a specified precision.
 This allows to seek balance between VRAM consumption and the quality of the generated text.
 
 * `float16` - 16-bit floating precision, a.k.a. "half-precision".
-  This is the default.
 * `float32` - 32-bit floating precision, a.k.a. "full-precision".
   Compared to `float16`, loading the model in `float32` may improve the quality of the generated text,
   but the model will consume nearly twice as much VRAM.
@@ -333,6 +332,7 @@ This allows to seek balance between VRAM consumption and the quality of the gene
   but the model will consume around 1.5 times less VRAM.
 * `gptq2`, `gptq4`, `gptq8` - [read below](#gptq)
 * `original` - use the original precision of the model.
+  This is the default.
 
 It only makes sense to downgrade the model's precision.
 For example, if you load 16-bit model in 32-bit precision mode
@@ -367,12 +367,15 @@ On HuggingFace Hub such models will have either "GPTQ" and/or "4bit" and "128g/6
 
 Example 4-bit GPTQ model: https://huggingface.co/TheBloke/vicuna-13B-1.1-GPTQ-4bit-128g.
 
-To load GPTQ models you need to specify additional parameters to CLI:
+To load GPTQ models you may want to specify additional parameters to CLI:
 [--model-basename](#model-basename-string-optional),
 [--group-size](#group-size-int-optional),
 [--true-sequential](#true-sequential-truefalse-optional-defaulttrue)
 and [--safetensors](#safetensors-truefalse-optional-defaulttrue).
 The last three already have popular defaults, so most of the time you only need to specify `--model-basename`.
+Also, if there's a `quantize_config.json` file inside the model's folder,
+then you don't need to specify `--group-size` and `--true-sequential`.
+If the GPTQ model has a proper filename, then `--model-basename` is also not needed.
 There are also some additional parameters that can influence the model behavior:
 [--fused-attention](#fused-attention-truefalse-optional-defaultfalse)
 and [--fused-mlp](#fused-mlp-truefalse-optional-defaultfalse).
@@ -395,6 +398,11 @@ You can also load GPTQ models directly from the HuggingFace Hub:
 ./start.sh --model Neko-Institute-of-Science/LLaMA-7B-4bit-128g --precision=gptq4 --model-basename=llama-7b-4bit-128g
 ```
 
+Loading a GPTQ model that has the `quantize_config.json` file and a proper filename:
+```sh
+./start.sh --model /opt/models/Llama-2-13B-chat-GPTQ
+```
+
 ### `model-basename`: string (optional)
 
 Specify a model basename, i.e. the filename without directory and extenstion.
@@ -403,6 +411,9 @@ This setting only applied for [GPTQ](#gptq) models, i.e. if `--precision=gptq*`.
 For example, to load the model `/some/dir/wizardLM-7B-GPTQ.safetensors`,
 use this: `--model=/some/dir --model-basename=wizardLM-7B-GPTQ --safetensors=true`.
 
+You can omit this parameter if the GPTQ model is named appropriately,
+e.g. `gptq_model-4bit-32g.safetensors`.
+
 ### `group-size`: int (optional)
 
 The group size parameter for a [GPTQ](#gptq) model.
@@ -410,10 +421,14 @@ This value is usually mentioned in the description of the model.
 Sometimes it's in the filename - a number with a `g` suffix,
 e.g. `koala-13B-GPTQ-4bit-128g` has group size of `128`.
 
+This parameter is ignored if there's a `quantize_config.json` in the model's folder.
+
 ### `true-sequential`: true|false (optional, default=true)
 
 The "true sequential" flag for a [GPTQ](#gptq) model.
 This value is usually mentioned in the description of the model.
+
+This parameter is ignored if there's a `quantize_config.json` in the model's folder.
 
 ### `safetensors`: true|false (optional, default=true)
 
@@ -1191,7 +1206,7 @@ However, it's possible to try to load the model in 8-bit or 4-bit precision.
 This may lower the quality of the generated text, but the model will consume only half/quarter as much VRAM.
 There are limitations when loading the model in 8-bit or 4-bit precision.
 See more details in
-[precision](#precision-originalfloat32float16float4int8gptq2gptq4gptq8-optional-defaultfloat16)
+[precision](#precision-originalfloat32float16float4int8gptq2gptq4gptq8-optional-defaultoriginal)
 parameter description.
 
 
