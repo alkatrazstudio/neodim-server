@@ -93,6 +93,7 @@ function main()
     const optWordsWhitelist = document.querySelector('#option-words-whitelist textarea')
     const optWordsBlacklist = document.querySelector('#option-words-blacklist textarea')
     const optWordsBlacklistAtStart = document.querySelector('#option-words-blacklist-at-start textarea')
+    const optCanStopEarlyEl = document.querySelector('#option-can-stop-early input')
 
     const btnGenerate = document.querySelector('#submit')
     const spinnerEl = document.querySelector('.spinner')
@@ -131,6 +132,7 @@ function main()
     optWordsWhitelist.value = (storedRequest.words_whitelist ?? []).join('\n').trim()
     optWordsBlacklist.value = (storedRequest.words_blacklist ?? []).join('\n').trim()
     optWordsBlacklistAtStart.value = (storedRequest.words_blacklist_at_start ?? []).join('\n').trim()
+    optCanStopEarlyEl.value = storedRequest.can_stop_early ?? false
 
     const locale = navigator.languages[0] ?? 'en-US'
     const decimalFormat = new Intl.NumberFormat(locale, {
@@ -179,6 +181,7 @@ function main()
             words_whitelist: optWordsWhitelist.value ? optWordsWhitelist.value.split('\n') : null,
             words_blacklist: optWordsBlacklist.value ? optWordsBlacklist.value.split('\n') : null,
             words_blacklist_at_start: optWordsBlacklistAtStart.value ? optWordsBlacklistAtStart.value.split('\n') : null,
+            can_stop_early: Boolean(optCanStopEarlyEl.checked),
         }
         saveSettings({
             ...request,
@@ -509,6 +512,12 @@ select {
             <label>
                 Words blacklist at the start
                 <textarea></textarea>
+            </label>
+        </section>
+        <section id="option-can-stop-early">
+            <label>
+                Can stop early
+                <input type="checkbox"/>
             </label>
         </section>
 
