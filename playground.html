@@ -77,22 +77,22 @@ function main()
     const optTfsEl = document.querySelector('#option-tfs input')
     const optTypicalEl = document.querySelector('#option-typical input')
     const optTopAEl = document.querySelector('#option-top-a input')
-    const optPenaltyAlpha = document.querySelector('#option-penalty-alpha input')
-    const optWarpersOrder = document.querySelector('#option-warpers-order input')
+    const optPenaltyAlphaEl = document.querySelector('#option-penalty-alpha input')
+    const optWarpersOrderEl = document.querySelector('#option-warpers-order input')
     const optRepetitionPenaltyEl = document.querySelector('#option-repetition-penalty input')
     const optRepetitionPenaltyRangeEl = document.querySelector('#option-repetition-penalty-range input')
     const optRepetitionPenaltySlopeEl = document.querySelector('#option-repetition-penalty-slope input')
     const optRepetitionPenaltyIncludePreambleEl = document.querySelector('#option-repetition-penalty-include-preamble input')
     const optRepetitionPenaltyIncludeGeneratedEl = document.querySelector('#option-repetition-penalty-include-generated select')
     const optRepetitionPenaltyTruncateToInputEl = document.querySelector('#option-repetition-penalty-truncate-to-input input')
-    const optNoRepeatNGramSize = document.querySelector('#option-no-repeat-ngram-size input')
+    const optNoRepeatNGramSizeEl = document.querySelector('#option-no-repeat-ngram-size input')
     const optTruncatePromptUntilEl = document.querySelector('#option-truncate-prompt-until input')
     const optStopStringsEl = document.querySelector('#option-stop-strings input')
     const optStopStringsTypeEl = document.querySelector('#option-stop-strings-type select')
     const optStopStringsRequiredMatchesCountEl = document.querySelector('#option-stop-strings-required-matches-count input')
-    const optWordsWhitelist = document.querySelector('#option-words-whitelist textarea')
-    const optWordsBlacklist = document.querySelector('#option-words-blacklist textarea')
-    const optWordsBlacklistAtStart = document.querySelector('#option-words-blacklist-at-start textarea')
+    const optWordsWhitelistEl = document.querySelector('#option-words-whitelist textarea')
+    const optWordsBlacklistEl = document.querySelector('#option-words-blacklist textarea')
+    const optWordsBlacklistAtStartEl = document.querySelector('#option-words-blacklist-at-start textarea')
     const optCanStopEarlyEl = document.querySelector('#option-can-stop-early input')
 
     const btnGenerate = document.querySelector('#submit')
@@ -116,22 +116,22 @@ function main()
     optTfsEl.value = storedRequest.tfs ?? 0.95
     optTypicalEl.value = storedRequest.typical ?? 0
     optTopAEl.value = storedRequest.top_a ?? 0
-    optPenaltyAlpha.value = storedRequest.penalty_alpha ?? 0
-    optWarpersOrder.value = JSON.stringify(storedRequest.warpers_order ?? [])
+    optPenaltyAlphaEl.value = storedRequest.penalty_alpha ?? 0
+    optWarpersOrderEl.value = JSON.stringify(storedRequest.warpers_order ?? [])
     optRepetitionPenaltyEl.value = storedRequest.repetition_penalty ?? 1.25
     optRepetitionPenaltyRangeEl.value = storedRequest.repetition_penalty_range ?? 512
     optRepetitionPenaltySlopeEl.value = storedRequest.repetition_penalty_slope ?? 0
     optRepetitionPenaltyIncludePreambleEl.value = storedRequest.repetition_penalty_include_preamble ?? false
     optRepetitionPenaltyIncludeGeneratedEl.value = storedRequest.repetition_penalty_include_generated ?? 'slide'
     optRepetitionPenaltyTruncateToInputEl.value = storedRequest.repetition_penalty_truncate_to_input ?? false
-    optNoRepeatNGramSize.value = storedRequest.no_repeat_ngram_size ?? 0
+    optNoRepeatNGramSizeEl.value = storedRequest.no_repeat_ngram_size ?? 0
     optTruncatePromptUntilEl.value = JSON.stringify(storedRequest.truncate_prompt_until ?? [' '])
     optStopStringsEl.value = JSON.stringify(storedRequest.stop_strings ?? [])
     optStopStringsTypeEl.value = storedRequest.stop_strings_type ?? 'string'
     optStopStringsRequiredMatchesCountEl.value = storedRequest.stop_strings_required_matches_count ?? 1
-    optWordsWhitelist.value = (storedRequest.words_whitelist ?? []).join('\n').trim()
-    optWordsBlacklist.value = (storedRequest.words_blacklist ?? []).join('\n').trim()
-    optWordsBlacklistAtStart.value = (storedRequest.words_blacklist_at_start ?? []).join('\n').trim()
+    optWordsWhitelistEl.value = (storedRequest.words_whitelist ?? []).join('\n').trim()
+    optWordsBlacklistEl.value = (storedRequest.words_blacklist ?? []).join('\n').trim()
+    optWordsBlacklistAtStartEl.value = (storedRequest.words_blacklist_at_start ?? []).join('\n').trim()
     optCanStopEarlyEl.value = storedRequest.can_stop_early ?? false
 
     const locale = navigator.languages[0] ?? 'en-US'
@@ -162,15 +162,15 @@ function main()
             tfs: parseFloat(optTfsEl.value),
             typical: parseFloat(optTypicalEl.value),
             top_a: parseFloat(optTopAEl.value),
-            penalty_alpha: parseFloat(optPenaltyAlpha.value),
-            warpers_order: fromJSON(optWarpersOrder.value, []),
+            penalty_alpha: parseFloat(optPenaltyAlphaEl.value),
+            warpers_order: fromJSON(optWarpersOrderEl.value, []),
             repetition_penalty: parseFloat(optRepetitionPenaltyEl.value),
             repetition_penalty_range: parseFloat(optRepetitionPenaltyRangeEl.value),
             repetition_penalty_slope: parseFloat(optRepetitionPenaltySlopeEl.value),
             repetition_penalty_include_preamble: Boolean(optRepetitionPenaltyIncludePreambleEl.checked),
             repetition_penalty_include_generated: optRepetitionPenaltyIncludeGeneratedEl.value,
             repetition_penalty_truncate_to_input: Boolean(optRepetitionPenaltyTruncateToInputEl.checked),
-            no_repeat_ngram_size: parseInt(optNoRepeatNGramSize.value),
+            no_repeat_ngram_size: parseInt(optNoRepeatNGramSizeEl.value),
             generated_tokens_count: parseInt(optGeneratedTokensCountEl.value),
             max_total_tokens: parseInt(optMaxTotalTokensEl.value),
             sequences_count: 1,
@@ -178,9 +178,9 @@ function main()
             stop_strings: fromJSON(optStopStringsEl.value, []),
             stop_strings_type: optStopStringsTypeEl.value,
             stop_strings_required_matches_count: parseInt(optStopStringsRequiredMatchesCountEl.value),
-            words_whitelist: optWordsWhitelist.value ? optWordsWhitelist.value.split('\n') : null,
-            words_blacklist: optWordsBlacklist.value ? optWordsBlacklist.value.split('\n') : null,
-            words_blacklist_at_start: optWordsBlacklistAtStart.value ? optWordsBlacklistAtStart.value.split('\n') : null,
+            words_whitelist: optWordsWhitelistEl.value ? optWordsWhitelistEl.value.split('\n') : null,
+            words_blacklist: optWordsBlacklistEl.value ? optWordsBlacklistEl.value.split('\n') : null,
+            words_blacklist_at_start: optWordsBlacklistAtStartEl.value ? optWordsBlacklistAtStartEl.value.split('\n') : null,
             can_stop_early: Boolean(optCanStopEarlyEl.checked),
         }
         saveSettings({
