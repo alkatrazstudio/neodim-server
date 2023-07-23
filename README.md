@@ -889,6 +889,22 @@ The output sequence will not contain the specified words or word sequences.
 * As a consequence of the previous gotcha, the blacklist is case-sensitive.
   For example, if you ban the word "go", then the word "GO" may still appear as it considered a different word.
 
+### `words_blacklist_at_start`: string[] (optional)
+
+The output sequence will not contain the specified words or word sequences at the start of the generation.
+
+It's the same as [words_blacklist](#words_blacklist-string-optional)
+except the following:
+
+* It will ban tokens, not token sequences.
+  For example, if `words_blacklist_at_start = ["hell of world"]` and each word is one token,
+  then the first word of the generated text will be neither "hell", "of" nor "world".
+
+* The tokens will be banned only at the start of the inference.
+  After the first token is generated, this list is not used.
+
+**Example:** `["\n"]` - this will instruct Neodim Server to not start the inference with a newline.
+
 ### `no_repeat_ngram_size`: int (optional)
 
 N-gram is a sequence of a consecutive tokens.

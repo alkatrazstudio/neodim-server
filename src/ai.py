@@ -4,6 +4,7 @@
 import copy
 from dataclasses import dataclass
 from enum import Enum
+from itertools import chain
 from typing import Optional
 
 import torch
@@ -56,6 +57,7 @@ class RequestData:
     sequences_count: int = 1
     words_whitelist: Optional[list[str]] = None
     words_blacklist: Optional[list[str]] = None
+    words_blacklist_at_start: Optional[list[str]] = None
     no_repeat_ngram_size: Optional[int] = None
     can_stop_early: bool = False
 
@@ -420,10 +422,14 @@ def generate(
             if not r.can_stop_early:
                 bad_words_ids += [[model.config.eos_token_id]]
 
+            begin_suppress_tokens = []
             if model.config.eos_token_id is not None:
-                begin_suppress_tokens = [model.config.eos_token_id]
-            else:
-                begin_suppress_tokens = None
+                begin_suppress_tokens.append(model.config.eos_token_id)
+            if r.words_blacklist_at_start is not None:
+                words_lists = tok.bad_words_by_blacklist(r.words_blacklist_at_start, tokenizer)
+                words = chain.from_iterable(words_lists)
+                words = list(set(words))
+                begin_suppress_tokens += words
 
             out_tensor = model.generate(
                 inputs=in_tensor,
