@@ -1179,7 +1179,15 @@ There are a couple of ways to optimize VRAM usage.
 On Linux you can run Neodim Server in `runlevel 3` (multi-user with networking, but without a display manager).
 It will allow you to use all VRAM that your GPU has, without spending it on your DE/WM.
 
-You can do it the following way:
+If you have GRUB, you can do this:
+
+1. Reboot.
+2. Highlight the OS in GRUB menu and press `E` to edit the boot options.
+3. Find the line that starts with `linux` and add `3` to it.
+4. Press `F10` to boot.
+5. Login to the console and run Neodim Server as usual (`.../neodim-server/start.sh ...`).
+
+The other way:
 
 1. Log out of your account (but not shutdown the computer) and get to the login screen.
 2. Switch to another console with `CTRL+ALT+F2` (try using any other `F-keys` if it does not work).
