@@ -1,6 +1,12 @@
 # Neodim Server - CHANGELOG
 
 
+## v0.13 (August 6, 2023)
+
+- Changed: GPTQ settings file (`quantize_config.json`) is now prioritized over the command line options
+- Added: [words_blacklist_at_start](README.md#words_blacklist_at_start-string-optional) parameter
+
+
 ## v0.12 (June 11, 2023)
 
 - Added: support for [GPTQ](README.md#gptq) models.
