@@ -280,9 +280,9 @@ def default_generation_config_by_model(model: PreTrainedModel) -> GenerationConf
         top_p=None,
         typical_p=None,
         repetition_penalty=None,
-        diversity_penalty=None,
         no_repeat_ngram_size=None,
-        encoder_no_repeat_ngram_size=None
+        encoder_no_repeat_ngram_size=None,
+        do_sample=True  # this is just to silence the warnings
     )
 
     # silence the Transformers warning "Setting `pad_token_id` to `eos_token_id`"

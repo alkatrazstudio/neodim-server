@@ -113,7 +113,11 @@ def remove_ignored_tokens(
 
 def add_break_token(tokenizer: PreTrainedTokenizer, model: PreTrainedModel) -> None:
     tokenizer.add_tokens([BREAK_TOKEN])
-    model.resize_token_embeddings(len(tokenizer))
+
+    # choosing pad_to_multiple_of:
+    # https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html#requirements-tc
+    # INT8 uses 128, so just in case assume that INT4 will use 256
+    model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=256)
 
 
 def tokens_to_str(
