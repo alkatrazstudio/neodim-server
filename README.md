@@ -1,3 +1,6 @@
+NOTE: This project is ABANDONED! It's recommended to use [llama.cpp](https://github.com/ggml-org/llama.cpp) instead.
+---
+
 # Neodim Server
 
 Neodim Server is an HTTP-server
