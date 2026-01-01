@@ -46,7 +46,6 @@ If you have any other OS you need to install Python, Git, Bash, sed and md5sum.
   - [Lowering the precision](#lowering-the-precision)
 - [Third-party libraries](#third-party-libraries)
 - [License](#license)
-- [Client applications](#client-applications)
 
 
 ## How it works
@@ -1241,11 +1240,3 @@ Other direct dependencies:
 ## License
 
 [AGPL v3](LICENSE)
-
-
-## Client applications
-
-Here's a list of applications that use Neodim Server:
-
-* [Neodim Chat](https://github.com/alkatrazstudio/neodim-chat) -
-  Android application for chatting with a bot
